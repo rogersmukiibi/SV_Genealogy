@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Silicon Valley Genealogy</title>
+  <meta name="description" content="An interactive map of how Silicon Valley companies descend from Shockley Semiconductor Laboratory, 1956–1975.">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#/" aria-label="Silicon Valley Genealogy, home">
+      <span class="brand-mark" aria-hidden="true"></span>
+      <span class="brand-text">Silicon Valley Genealogy</span>
+    </a>
+
+    <div class="search" role="search">
+      <input id="search" type="search" placeholder="Search companies or people…" autocomplete="off"
+             aria-label="Search companies or people" aria-controls="search-results" aria-expanded="false">
+      <kbd class="search-hint" aria-hidden="true">/</kbd>
+      <ul id="search-results" class="search-results" role="listbox" hidden></ul>
+    </div>
+
+    <button id="about-btn" class="btn ghost" type="button">About</button>
+  </header>
+
+  <main class="stage">
+    <div id="map" class="map" tabindex="0" aria-label="Genealogy map. Drag to pan, scroll or pinch to zoom.">
+      <svg id="axis" class="axis" aria-hidden="true"></svg>
+      <svg id="canvas" class="canvas" role="img" aria-label="Company genealogy graph"></svg>
+      <div id="year-badge" class="year-badge" aria-live="polite"></div>
+    </div>
+
+    <div class="zoom-controls" role="group" aria-label="Zoom">
+      <button class="btn icon" type="button" data-zoom="in" aria-label="Zoom in">+</button>
+      <button class="btn icon" type="button" data-zoom="out" aria-label="Zoom out">−</button>
+      <button class="btn icon" type="button" data-zoom="fit" aria-label="Fit whole map">⤢</button>
+    </div>
+
+    <aside class="legend" aria-label="Legend and filters">
+      <button class="legend-toggle" type="button" aria-expanded="true" aria-controls="legend-body">Legend &amp; filters</button>
+      <div id="legend-body" class="legend-body">
+        <p class="legend-title">Sectors</p>
+        <div id="sector-filters" class="chips"></div>
+        <p class="legend-title">Links</p>
+        <div id="link-filters" class="link-list"></div>
+      </div>
+    </aside>
+
+    <canvas id="minimap" class="minimap" width="220" height="110" aria-label="Minimap. Click to move the view."></canvas>
+
+    <aside id="panel" class="panel" hidden aria-labelledby="panel-title">
+      <button id="panel-close" class="btn icon panel-close" type="button" aria-label="Close details">×</button>
+      <div id="panel-body"></div>
+    </aside>
+  </main>
+
+  <footer class="timeline" aria-label="Timeline">
+    <button id="play" class="btn play" type="button" aria-label="Play timeline">▶</button>
+    <div class="timeline-track">
+      <input id="year" type="range" min="1955" max="1975" step="1" value="1975" aria-label="Show the Valley as of year">
+      <div id="ticks" class="ticks" aria-hidden="true"></div>
+    </div>
+    <output id="year-out" class="year-out" for="year">1975</output>
+    <span id="count" class="count"></span>
+  </footer>
+
+  <dialog id="about" class="about">
+    <form method="dialog">
+      <h2>About this map</h2>
+      <p>Every box is a company. Lines show how it descends from earlier ones: founders who left to start it, alumni who joined, money that backed it, or assets it was built from. Almost every line leads back to <strong>Shockley Semiconductor Laboratory</strong> (1956) and the eight engineers who left it to found Fairchild.</p>
+      <p>This first chapter covers 1956–1975. Use the slider or ▶ to watch the Valley grow year by year. Click any company to see its path back to Shockley.</p>
+      <h3>Sources</h3>
+      <ul>
+        <li>The semiconductor backbone follows SEMI's 1984 “Silicon Valley Genealogy” poster, developed by Don C. Hoefler from a concept by Jack Yelverton. The poster inspired this map; the map is not a copy of it.</li>
+        <li>Venture firms and non-chip companies are added from the sources listed on each company.</li>
+      </ul>
+      <h3>Controls</h3>
+      <ul>
+        <li>Drag to pan. Scroll, pinch or use + / − to zoom.</li>
+        <li>Press <kbd>/</kbd> to search, <kbd>Esc</kbd> to close details.</li>
+      </ul>
+      <button class="btn" value="close">Close</button>
+    </form>
+  </dialog>
+
+  <script src="data/genealogy.js"></script>
+  <script src="js/graph.js"></script>
+  <script src="js/map.js"></script>
+  <script src="js/ui.js"></script>
+</body>
+</html>
