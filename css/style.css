@@ -14,9 +14,14 @@
 
   --sector-chips: #2f6fe0;
   --sector-computers: #0e988b;
+  --sector-networking: #2e8f3e;
+  --sector-software: #f2c200;
+  --sector-internet: #d0387f;
   --sector-games: #de5a26;
+  --sector-cleantech: #6aa412;
   --sector-vc: #8a4ed6;
   --sector-corporate: #7b8594;
+  --sector-people: #8a5a2b;
 
   --link-spinout: #2f6fe0;
   --link-alumni: #8a94a3;
@@ -44,9 +49,14 @@
 
     --sector-chips: #5d94ff;
     --sector-computers: #2fc6b6;
+    --sector-networking: #5cc26b;
+    --sector-software: #ffd43b;
+    --sector-internet: #f06aa8;
     --sector-games: #ff8656;
+    --sector-cleantech: #a3d65c;
     --sector-vc: #b386ff;
     --sector-corporate: #9aa4b4;
+    --sector-people: #d29a5e;
 
     --link-spinout: #5d94ff;
     --link-alumni: #7e8898;
@@ -70,9 +80,14 @@
   --era-b: rgba(0, 0, 0, 0);
   --sector-chips: #5d94ff;
   --sector-computers: #2fc6b6;
+  --sector-networking: #5cc26b;
+  --sector-software: #ffd43b;
+  --sector-internet: #f06aa8;
   --sector-games: #ff8656;
+  --sector-cleantech: #a3d65c;
   --sector-vc: #b386ff;
   --sector-corporate: #9aa4b4;
+  --sector-people: #d29a5e;
   --link-spinout: #5d94ff;
   --link-alumni: #7e8898;
   --link-funding: #b386ff;
@@ -264,7 +279,7 @@ kbd {
 .axis-label.current { fill: var(--accent); font-weight: 800; }
 
 .era { fill: var(--era-b); }
-.era-0, .era-2 { fill: var(--era-a); }
+.era-a { fill: var(--era-a); }
 .era-label {
   fill: var(--muted);
   font-size: 13px;
@@ -274,6 +289,10 @@ kbd {
   opacity: 0.8;
 }
 .gridline { stroke: var(--border); stroke-dasharray: 2 6; }
+.gridline-q { opacity: 0.45; stroke-dasharray: 1 9; }
+.canvas.far .gridline-q { display: none; }
+.era-label { cursor: pointer; }
+.era-label:hover { fill: var(--accent); text-decoration: underline; }
 
 /* Links */
 .edge {
@@ -307,12 +326,23 @@ kbd {
 .node.gone .node-label { fill: var(--muted); }
 .node.gone .node-stripe { opacity: 0.45; }
 .node.selected .node-bg { stroke: var(--accent); stroke-width: 3; }
+.node.root .node-bg { stroke: var(--text); stroke-width: 2; }
+.node.person .node-stripe { display: none; }
+.node.person .node-bg { stroke: var(--sector-people); stroke-width: 1.5; }
+.node.person .node-label { font-style: italic; }
 
-.sector-chips .node-stripe, .dot.sector-chips, .chip.sector-chips .swatch { fill: var(--sector-chips); background: var(--sector-chips); }
-.sector-computers .node-stripe, .dot.sector-computers, .chip.sector-computers .swatch { fill: var(--sector-computers); background: var(--sector-computers); }
-.sector-games .node-stripe, .dot.sector-games, .chip.sector-games .swatch { fill: var(--sector-games); background: var(--sector-games); }
-.sector-vc .node-stripe, .dot.sector-vc, .chip.sector-vc .swatch { fill: var(--sector-vc); background: var(--sector-vc); }
-.sector-corporate .node-stripe, .dot.sector-corporate, .chip.sector-corporate .swatch { fill: var(--sector-corporate); background: var(--sector-corporate); }
+.sector-chips { --sc: var(--sector-chips); }
+.sector-computers { --sc: var(--sector-computers); }
+.sector-networking { --sc: var(--sector-networking); }
+.sector-software { --sc: var(--sector-software); }
+.sector-internet { --sc: var(--sector-internet); }
+.sector-games { --sc: var(--sector-games); }
+.sector-cleantech { --sc: var(--sector-cleantech); }
+.sector-vc { --sc: var(--sector-vc); }
+.sector-corporate { --sc: var(--sector-corporate); }
+.sector-people { --sc: var(--sector-people); }
+.node .node-stripe { fill: var(--sc); }
+.dot, .chip .swatch { background: var(--sc); }
 
 .hidden { opacity: 0 !important; pointer-events: none; }
 
@@ -515,6 +545,35 @@ kbd {
 .rel li:last-child { border-bottom: 0; }
 .rel small { color: var(--muted); }
 .sources li { font-size: 13px; color: var(--muted); }
+.trace-root { margin: 0 0 8px; }
+.trace-node.root { border-color: var(--text); }
+.other-root { margin-top: 8px; }
+.other-root summary { cursor: pointer; color: var(--muted); font-size: 13px; padding: 4px 0; }
+.other-root[open] summary { margin-bottom: 6px; }
+
+.findings { margin: 0; padding-left: 18px; }
+.findings li { padding: 2px 0; }
+.bar-row { display: grid; grid-template-columns: 9.5em 1fr 2.5em; align-items: center; gap: 8px; padding: 3px 0; font-size: 13px; }
+.bar-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bar { height: 8px; border-radius: 4px; background: var(--surface-2); overflow: hidden; }
+.bar-fill { display: block; height: 100%; border-radius: 4px; background: var(--sc, var(--accent)); }
+.bar-fill.link-spinout { background: var(--link-spinout); }
+.bar-fill.link-alumni { background: var(--link-alumni); }
+.bar-fill.link-funding { background: var(--link-funding); }
+.bar-fill.link-acquisition { background: var(--link-acquisition); }
+.bar-fill.link-founder { background: var(--sector-people); }
+.bar-fill.root-bar { background: var(--text); opacity: 0.7; }
+.bar-n { text-align: right; color: var(--muted); font-variant-numeric: tabular-nums; }
+.company-list { margin: 0; line-height: 1.7; }
+.rel-plain { margin: 0; padding: 0; list-style: none; }
+.rel-plain li { padding: 2px 0; }
+.era-nav { display: flex; justify-content: space-between; gap: 8px; margin-top: 24px; }
+.era-nav .btn { font-size: 12.5px; text-decoration: none; }
+.badge.link-founder { color: var(--sector-people); }
+.link-founder { stroke: var(--sector-people); stroke-width: 2; }
+
+.cite { font-size: 11px; color: var(--muted); white-space: nowrap; }
+a.cite { color: var(--accent); }
 
 /* ---------- Timeline ---------- */
 .timeline {

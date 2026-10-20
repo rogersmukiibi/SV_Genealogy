@@ -10,19 +10,13 @@
   var W = L.nodeWidth, H = L.nodeHeight;
   var MIN_K = 0.15, MAX_K = 2.5;
 
-  var ERAS = [
-    { label: "Roots",                       from: null, to: L.firstYear - 1 },
-    { label: "The transistor",              from: 1955, to: 1958 },
-    { label: "The integrated circuit",      from: 1959, to: 1967 },
-    { label: "Memory & the microprocessor", from: 1968, to: 1975 }
-  ];
-
   var g, mapEl, svg, world, axis, minimap, yearBadge;
   var view = { k: 1, tx: 0, ty: 0 };
   var inset = { right: 0, bottom: 0 };
   var nodeEls = {}, edgeEls = [];
   var visibleNode = {};
   var onSelect = function () {};
+  var onEra = function () {};
   var anim = null;
 
   function el(name, attrs, parent) {
@@ -68,16 +62,24 @@
     var nodes = el("g", { "class": "nodes" }, world);
 
     // Eras and year grid
-    ERAS.forEach(function (era, i) {
+    g.eras.forEach(function (era, i) {
       var x0 = era.from === null ? -24 : Graph.xForYear(era.from) - 16;
       var x1 = era.from === null ? L.rootsWidth - 16 : Graph.xForYear(era.to + 1) - 16;
-      el("rect", { x: x0, y: 0, width: x1 - x0, height: g.height, "class": "era era-" + i }, eras);
-      var t = el("text", { x: x0 + 14, y: 72, "class": "era-label" }, eras);
+      el("rect", { x: x0, y: 0, width: x1 - x0, height: g.height, "class": "era " + (i % 2 ? "era-b" : "era-a") }, eras);
+      var t = el("text", { x: x0 + 14, y: 72, "class": "era-label", "data-era": era.id, role: "link" }, eras);
       t.textContent = era.label;
+      var tip = el("title", {}, t);
+      tip.textContent = "Show findings for " + era.label;
     });
     for (var y = L.firstYear; y <= L.lastYear; y++) {
       var gx = Graph.xForYear(y) - 16;
       el("line", { x1: gx, y1: 88, x2: gx, y2: g.height, "class": "gridline" }, eras);
+      if (Graph.yearHasQuarters(y)) {
+        for (var q = 1; q < 4; q++) {
+          var qx = gx + q * L.quarterWidth;
+          el("line", { x1: qx, y1: 88, x2: qx, y2: g.height, "class": "gridline gridline-q" }, eras);
+        }
+      }
     }
 
     g.links.forEach(function (l) {
@@ -94,8 +96,9 @@
         "data-id": c.id, tabindex: "-1", role: "button", "aria-label": c.name + ", founded " + c.founded
       }, nodes);
       var title = el("title", {}, n);
-      title.textContent = c.name + " (" + c.founded + (c.ended ? "–" + c.ended : "") + ")";
-      el("rect", { "class": "node-bg", width: W, height: H, rx: 8 }, n);
+      title.textContent = c.name + " (" + c.founded + (c.ended ? "–" + c.ended : "") + ")" + (g.isRoot[c.id] ? " · root" : "");
+      var person = c.sector === "people";
+      el("rect", { "class": "node-bg", width: W, height: H, rx: person ? H / 2 : 8 }, n);
       el("rect", { "class": "node-stripe", width: 5, height: H, rx: 2 }, n);
       var lines = wrap(c.name, 22);
       var t = el("text", { "class": "node-label", x: 14, y: H / 2 }, n);
@@ -103,7 +106,9 @@
         var ts = el("tspan", { x: 14, dy: i === 0 ? (lines.length === 1 ? "0.35em" : "-0.25em") : "1.2em" }, t);
         ts.textContent = line;
       });
-      if (c.out.length >= 3 || c.id === Graph.ROOT_ID) n.classList.add("major");
+      if (c.out.length >= 3 || g.isRoot[c.id]) n.classList.add("major");
+      if (g.isRoot[c.id]) n.classList.add("root");
+      if (person) n.classList.add("person");
       nodeEls[c.id] = n;
     });
   }
@@ -168,6 +173,17 @@
     animateTo(centerOn(c.x + W / 2, c.y + H / 2, k), 650);
   }
 
+  // Show a span of years, e.g. an era, as large as fits.
+  function showRange(x0, x1) {
+    var s = size();
+    var fitK = s.w / (x1 - x0 + 120);
+    var k = Math.max(0.45, Math.min(1, fitK));
+    // Wide eras: start at the era's left edge, clear of the legend, at a readable zoom.
+    var left = window.innerWidth > 760 ? 280 : 16;
+    var tx = fitK >= 0.45 ? s.w / 2 - (x0 + x1) / 2 * k : left - x0 * k;
+    animateTo({ k: k, tx: tx, ty: s.h / 2 - g.height / 2 * k }, 650);
+  }
+
   function fit() {
     var s = size();
     var k = Math.min(s.w / g.width, s.h / g.height) * 0.96;
@@ -196,15 +212,20 @@
 
   function drawAxis() {
     var s = mapEl.clientWidth;
-    var spacing = L.yearWidth * view.k;
-    var every = spacing > 46 ? 1 : spacing > 22 ? 2 : 5;
     var out = "";
     var rootX = view.tx + (L.rootsWidth / 2 - 30) * view.k;
-    if (rootX > -40 && rootX < s) out += '<text x="' + rootX + '" y="22" class="axis-label">Roots</text>';
+    var lastX = -Infinity;
+    if (rootX > -40 && rootX < s && L.rootsWidth * view.k > 70) {
+      out += '<text x="' + rootX + '" y="22" class="axis-label">Roots</text>';
+      lastX = rootX;
+    }
     for (var y = L.firstYear; y <= L.lastYear - 1; y++) {
-      if (y % every) continue;
-      var x = view.tx + (Graph.xForYear(y) + W / 2) * view.k;
+      // Label each column at its centre, skipping labels that would collide.
+      var mid = (Graph.xForYear(y) + Graph.xForYear(y + 1) - 16) / 2;
+      var x = view.tx + mid * view.k;
+      if (x - lastX < 44 && y !== currentYear) continue;
       if (x < -40 || x > s + 40) continue;
+      lastX = x;
       out += '<text x="' + x + '" y="22" class="axis-label' + (y === currentYear ? " current" : "") + '">' + y + "</text>";
     }
     axis.innerHTML = out;
@@ -217,7 +238,7 @@
 
   function readColors() {
     var cs = getComputedStyle(document.documentElement);
-    ["chips", "computers", "games", "vc", "corporate"].forEach(function (k) {
+    Object.keys(Graph.SECTORS).forEach(function (k) {
       colors[k] = cs.getPropertyValue("--sector-" + k).trim();
     });
     colors.view = cs.getPropertyValue("--accent").trim();
@@ -318,7 +339,9 @@
         mapEl.classList.remove("dragging");
         if (!moved && e.type === "pointerup" && downTarget) {
           var node = downTarget.closest && downTarget.closest(".node");
-          onSelect(node ? node.getAttribute("data-id") : null);
+          var era = !node && downTarget.closest && downTarget.closest("[data-era]");
+          if (era) onEra(era.getAttribute("data-era"));
+          else onSelect(node ? node.getAttribute("data-id") : null);
         }
         last = null; downTarget = null;
       }
@@ -410,6 +433,7 @@
   function init(graph, opts) {
     g = graph;
     onSelect = opts.onSelect;
+    onEra = opts.onEra || onEra;
     mapEl = document.getElementById("map");
     svg = document.getElementById("canvas");
     axis = document.getElementById("axis");
@@ -426,6 +450,7 @@
     setFilter: setFilter,
     setFocus: setFocus,
     glideTo: glideTo,
+    showRange: showRange,
     fit: fit,
     ensureXVisible: ensureXVisible,
     showYearBadge: showYearBadge,

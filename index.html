@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Silicon Valley Genealogy</title>
-  <meta name="description" content="An interactive map of how Silicon Valley companies descend from Shockley Semiconductor Laboratory, 1956–1975.">
+  <meta name="description" content="An interactive map of how Silicon Valley companies descend from Shockley Semiconductor Laboratory, 1956–2007.">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -21,6 +21,7 @@
       <ul id="search-results" class="search-results" role="listbox" hidden></ul>
     </div>
 
+    <button id="eras-btn" class="btn ghost" type="button">Eras</button>
     <button id="about-btn" class="btn ghost" type="button">About</button>
   </header>
 
@@ -58,23 +59,28 @@
   <footer class="timeline" aria-label="Timeline">
     <button id="play" class="btn play" type="button" aria-label="Play timeline">▶</button>
     <div class="timeline-track">
-      <input id="year" type="range" min="1955" max="1975" step="1" value="1975" aria-label="Show the Valley as of year">
+      <input id="year" type="range" min="1955" max="2007" step="1" value="2007" aria-label="Show the Valley as of year">
       <div id="ticks" class="ticks" aria-hidden="true"></div>
     </div>
-    <output id="year-out" class="year-out" for="year">1975</output>
+    <output id="year-out" class="year-out" for="year">2007</output>
     <span id="count" class="count"></span>
   </footer>
 
   <dialog id="about" class="about">
     <form method="dialog">
       <h2>About this map</h2>
-      <p>Every box is a company. Lines show how it descends from earlier ones: founders who left to start it, alumni who joined, money that backed it, or assets it was built from. Almost every line leads back to <strong>Shockley Semiconductor Laboratory</strong> (1956) and the eight engineers who left it to found Fairchild.</p>
-      <p>This first chapter covers 1956–1975. Use the slider or ▶ to watch the Valley grow year by year. Click any company to see its path back to Shockley.</p>
+      <p>Every box is a company; rounded pills are people who acted on their own. Lines show how each descends from earlier ones: founders who left to start it, alumni who joined, money that backed it, or assets it was built from. Traces end at a handful of <strong>roots</strong>, above all <strong>Shockley Semiconductor Laboratory</strong> (1956) and the eight engineers who left it to found Fairchild.</p>
+      <p>The map runs from the transistor to Web 2.0, 1956–2007. Use the slider or ▶ to watch the Valley grow year by year. Click any company to see its path back to Shockley.</p>
+      <h3>Eras</h3>
+      <p>Click an era's name on the map, or pick one here, to see what the data says about it.</p>
+      <ul id="about-eras"></ul>
       <h3>Sources</h3>
       <ul>
-        <li>The semiconductor backbone follows SEMI's 1984 “Silicon Valley Genealogy” poster, developed by Don C. Hoefler from a concept by Jack Yelverton. The poster inspired this map; the map is not a copy of it.</li>
-        <li>Venture firms and non-chip companies are added from the sources listed on each company.</li>
+        <li>The semiconductor backbone up to 1981 follows SEMI's 1984 “Silicon Valley Genealogy” poster, developed by Don C. Hoefler from a concept by Jack Yelverton. The poster inspired this map; the map is not a copy of it.</li>
+        <li>Everything else, including venture funding, is checked against the sources listed on each company and link: mostly Wikipedia, the Computer History Museum, company histories and filings. Where sources disagree, the company's note says so.</li>
       </ul>
+      <h3>Known gaps</h3>
+      <div id="about-gaps"></div>
       <h3>Controls</h3>
       <ul>
         <li>Drag to pan. Scroll, pinch or use + / − to zoom.</li>
@@ -84,9 +90,17 @@
     </form>
   </dialog>
 
-  <script src="data/genealogy.js"></script>
+  <script src="data/core.js"></script>
+  <script src="data/eras/1885-1954-roots.js"></script>
+  <script src="data/eras/1955-1958-transistor.js"></script>
+  <script src="data/eras/1959-1967-integrated-circuit.js"></script>
+  <script src="data/eras/1968-1975-microprocessor.js"></script>
+  <script src="data/eras/1976-1989-personal-computer.js"></script>
+  <script src="data/eras/1990-2001-dot-com.js"></script>
+  <script src="data/eras/2002-2007-web2-social.js"></script>
   <script src="js/graph.js"></script>
   <script src="js/map.js"></script>
+  <script src="js/insights.js"></script>
   <script src="js/ui.js"></script>
 </body>
 </html>

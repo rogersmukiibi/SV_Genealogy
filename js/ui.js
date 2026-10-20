@@ -1,12 +1,13 @@
 /*
  * UI wiring: hash routing, search, the details panel (with the trace back to
- * Shockley), sector/link filters and the timeline player.
+ * the roots), era findings, sector/link filters and the timeline player.
  */
 (function () {
   "use strict";
 
   var g = Graph.build(window.GENEALOGY);
   var L = Graph.LAYOUT;
+  var MIN_YEAR = L.firstYear, MAX_YEAR = L.lastYear - 1;
   var $ = function (id) { return document.getElementById(id); };
 
   var state = {
@@ -29,8 +30,19 @@
     return '<a href="#/company/' + c.id + '">' + esc(c.name) + "</a>";
   }
 
+  function citeHtml(src) {
+    if (!src) return "";
+    if (Array.isArray(src)) return src.map(citeHtml).join("");
+    if (g.sources[src]) return ' <span class="cite" title="' + esc(g.sources[src].title) + '">[' + esc(g.sources[src].short || "source") + "]</span>";
+    return ' <a class="cite" href="' + esc(src) + '" target="_blank" rel="noopener">[source]</a>';
+  }
+
+  var MONTHS = ["January", "February", "March", "April", "May", "June", "July",
+    "August", "September", "October", "November", "December"];
+
   function years(c) {
-    return c.founded + (c.ended ? "–" + c.ended : "");
+    if (c.sector === "people") return "on the map from " + c.founded;
+    return (c.month ? MONTHS[c.month - 1] + " " : "") + c.founded + (c.ended ? "–" + c.ended : "");
   }
 
   // ---- filters and timeline ----
@@ -39,13 +51,15 @@
     MapView.setFilter({ year: state.year, sectors: state.sectors, links: state.links });
     $("year").value = state.year;
     $("year-out").textContent = state.year;
-    var total = 0, active = 0;
+    var total = 0, ended = 0, people = 0;
     g.companies.forEach(function (c) {
       if (c.founded < L.firstYear || c.founded > state.year || !state.sectors[c.sector]) return;
+      if (c.sector === "people") { people++; return; }
       total++;
-      if (!c.ended || c.ended > state.year) active++;
+      if (c.ended && c.ended <= state.year) ended++;
     });
-    $("count").textContent = total + " companies · " + active + " still independent";
+    $("count").textContent = total + " companies · " + ended + " acquired or closed" +
+      (people ? " · " + people + " people" : "");
   }
 
   function buildLegend() {
@@ -92,10 +106,11 @@
     setOpen(window.innerWidth > 760);
 
     var ticks = $("ticks");
-    for (var y = 1955; y <= 1975; y += 5) {
+    var step = MAX_YEAR - MIN_YEAR > 30 ? 10 : 5;
+    for (var y = Math.ceil(MIN_YEAR / 5) * 5; y <= MAX_YEAR; y += step) {
       var s = document.createElement("span");
       s.textContent = y;
-      s.style.left = ((y - 1955) / 20 * 100) + "%";
+      s.style.left = ((y - MIN_YEAR) / (MAX_YEAR - MIN_YEAR) * 100) + "%";
       ticks.appendChild(s);
     }
   }
@@ -112,7 +127,7 @@
   }
 
   function startPlay() {
-    if (state.year >= 1975) state.year = 1955;
+    if (state.year >= MAX_YEAR) state.year = MIN_YEAR;
     $("play").textContent = "❚❚";
     $("play").setAttribute("aria-label", "Pause timeline");
     var tick = function () {
@@ -122,44 +137,62 @@
     };
     tick();
     playTimer = setInterval(function () {
-      if (state.year >= 1975) { stopPlay(); return; }
+      if (state.year >= MAX_YEAR) { stopPlay(); return; }
       state.year++;
       tick();
-    }, 900);
+    }, 650);
   }
 
   function bindTimeline() {
+    $("year").min = MIN_YEAR;
+    $("year").max = MAX_YEAR;
     $("year").addEventListener("input", function (e) {
       stopPlay();
       state.year = +e.target.value;
       applyFilter();
+      MapView.ensureXVisible(Graph.xForYear(state.year) + L.nodeWidth);
     });
     $("play").addEventListener("click", function () { playTimer ? stopPlay() : startPlay(); });
   }
 
   // ---- details panel ----
 
-  function traceHtml(c) {
-    if (c.id === Graph.ROOT_ID) {
-      return '<p class="muted">This is the starting point. Every line on the map that leads back to the Valley\'s silicon industry ends here.</p>';
-    }
-    var steps = Graph.pathToRoot(g, c.id);
-    if (!steps) {
-      if (Graph.descendants(g, c.id)[Graph.ROOT_ID]) {
-        return '<p class="muted">Upstream of Shockley: this company fed into the lab rather than descending from it.</p>';
-      }
-      return '<p class="muted">No documented link back to Shockley on this map yet. ' +
-        "Its founders came from outside the Fairchild family tree.</p>";
-    }
+  function pathHtml(c, steps) {
     var html = '<ol class="trace"><li class="trace-node current"><strong>' + esc(c.name) +
       "</strong><span>" + c.founded + "</span></li>";
     steps.forEach(function (l) {
       var p = g.byId[l.from];
       html += '<li class="trace-link link-' + l.type + '"><span class="badge link-' + l.type + '">' +
-        esc(Graph.LINK_TYPES[l.type].label) + " · " + l.year + "</span>" + esc(l.note) + "</li>";
-      html += '<li class="trace-node">' + companyLink(p.id) + "<span>" + p.founded + "</span></li>";
+        esc(Graph.LINK_TYPES[l.type].label) + " · " + l.year + "</span>" + esc(l.note) + citeHtml(l.source) + "</li>";
+      html += '<li class="trace-node' + (g.isRoot[p.id] ? " root" : "") + '">' + companyLink(p.id) +
+        "<span>" + p.founded + "</span></li>";
     });
     return html + "</ol>";
+  }
+
+  function otherRootsHtml(c, others) {
+    return others.map(function (r) {
+      return '<details class="other-root"><summary>Also descends from ' + esc(g.byId[r.root].name) +
+        ' <span class="muted">(' + r.steps.length + " step" + (r.steps.length === 1 ? "" : "s") + ")</span></summary>" +
+        pathHtml(c, r.steps) + "</details>";
+    }).join("");
+  }
+
+  function traceHtml(c) {
+    var all = Graph.pathsToRoots(g, c.id);
+    if (g.isRoot[c.id]) {
+      return '<p class="trace-root">This is a root: ' + esc(g.isRoot[c.id].why) + "</p>" + otherRootsHtml(c, all);
+    }
+    if (!all.length) {
+      var feeds = g.roots.filter(function (r) { return Graph.descendants(g, c.id)[r.id]; });
+      if (feeds.length) {
+        return '<p class="muted">Upstream of ' + feeds.map(function (r) { return companyLink(r.id); }).join(", ") +
+          ": it fed into a root rather than descending from one.</p>";
+      }
+      return '<p class="muted">No documented path to any root on this map yet.</p>';
+    }
+    return '<p class="trace-root">Nearest root: ' + companyLink(all[0].root) + "</p>" +
+      pathHtml(c, all[0].steps) + otherRootsHtml(c, all.slice(1));
   }
 
   function linkListHtml(list, dir) {
@@ -168,7 +201,7 @@
       var other = dir === "in" ? l.from : l.to;
       return '<li><span class="badge link-' + l.type + '">' + esc(Graph.LINK_TYPES[l.type].label) +
         "</span> " + companyLink(other) + ' <span class="muted">' + l.year + "</span><br><small>" +
-        esc(l.note) + "</small></li>";
+        esc(l.note) + citeHtml(l.source) + "</small></li>";
     }).join("") + "</ul>";
   }
 
@@ -181,6 +214,7 @@
   }
 
   function panelHtml(c) {
+    var person = c.sector === "people";
     var founders = c.founders.length ? '<ul class="people">' + c.founders.map(function (f) {
       var from = !f.f ? "" : g.byId[f.f] ? " <span class=\"muted\">from</span> " + companyLink(f.f)
         : ' <span class="muted">from ' + esc(f.f) + "</span>";
@@ -194,10 +228,10 @@
       (c.fate ? '<p class="fate">' + esc(c.fate) + "</p>" : "") +
       "</header>" +
       (c.note ? '<p class="note">' + esc(c.note) + "</p>" : "") +
-      "<section><h3>Path to Shockley</h3>" + traceHtml(c) + "</section>" +
-      "<section><h3>Founders</h3>" + founders + "</section>" +
-      "<section><h3>Came from</h3>" + linkListHtml(c.in, "in") + "</section>" +
-      "<section><h3>Led to</h3>" + linkListHtml(c.out, "out") + "</section>" +
+      "<section><h3>Roots</h3>" + traceHtml(c) + "</section>" +
+      (person ? "" : "<section><h3>Founders</h3>" + founders + "</section>") +
+      "<section><h3>" + (person ? "Background" : "Came from") + "</h3>" + linkListHtml(c.in, "in") + "</section>" +
+      "<section><h3>" + (person ? "Founded and backed" : "Led to") + "</h3>" + linkListHtml(c.out, "out") + "</section>" +
       "<section><h3>Sources</h3>" + sourcesHtml(c) + "</section>";
   }
 
@@ -231,6 +265,27 @@
     document.title = c.name + " · Silicon Valley Genealogy";
   }
 
+  var helpers = { esc: esc, companyLink: function (id) { return companyLink(id); } };
+
+  function showEra(id) {
+    var era = g.eras.filter(function (e) { return e.id === id; })[0];
+    var html = era && Insights.eraHtml(g, id, helpers);
+    if (!html) return close();
+    state.selected = "era:" + id;
+    if (state.year < Math.min(era.to, MAX_YEAR)) { stopPlay(); state.year = Math.min(era.to, MAX_YEAR); }
+    applyFilter();
+    var panel = $("panel");
+    $("panel-body").innerHTML = html;
+    panel.hidden = false;
+    panel.scrollTop = 0;
+    updateInset();
+    MapView.setFocus(null);
+    var x0 = era.from === null ? -24 : Graph.xForYear(era.from) - 16;
+    var x1 = era.from === null ? L.rootsWidth - 16 : Graph.xForYear(era.to + 1) - 16;
+    MapView.showRange(x0, x1);
+    document.title = era.label + " · Silicon Valley Genealogy";
+  }
+
   function close() {
     state.selected = null;
     $("panel").hidden = true;
@@ -244,8 +299,9 @@
   var glideNext = true;
 
   function route() {
-    var m = location.hash.match(/^#\/company\/([\w-]+)/);
-    if (m) select(m[1], { glide: glideNext });
+    var m = location.hash.match(/^#\/(company|era)\/([\w-]+)/);
+    if (m && m[1] === "company") select(m[2], { glide: glideNext });
+    else if (m) showEra(m[2]);
     else close();
     glideNext = true;
   }
@@ -353,7 +409,8 @@
     onSelect: function (id) {
       if (id) go(id, false);
       else if (state.selected) go(null);
-    }
+    },
+    onEra: function (id) { location.hash = "#/era/" + id; }
   });
   buildLegend();
   bindTimeline();
@@ -369,6 +426,18 @@
     });
   });
   $("about-btn").addEventListener("click", function () { $("about").showModal(); });
+  $("eras-btn").addEventListener("click", function () {
+    var era = Insights.eraOf(g, state.year) || g.eras[g.eras.length - 1];
+    location.hash = "#/era/" + era.id;
+  });
+  $("about-eras").innerHTML = g.eras.map(function (e) {
+    return '<li><a href="#/era/' + e.id + '">' + esc(e.label) + "</a> <span class=\"muted\">" +
+      (e.from === null ? "before " + (e.to + 1) : e.from + "–" + e.to) + "</span></li>";
+  }).join("");
+  $("about-gaps").innerHTML = Insights.gapsHtml(g, helpers);
+  $("about").addEventListener("click", function (e) {
+    if (e.target.closest("a[href^='#/']")) $("about").close();
+  });
   window.addEventListener("resize", updateInset);
   window.addEventListener("hashchange", route);
   route();
