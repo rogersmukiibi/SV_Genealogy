@@ -33,7 +33,9 @@
   function citeHtml(src) {
     if (!src) return "";
     if (Array.isArray(src)) return src.map(citeHtml).join("");
-    if (g.sources[src]) return ' <span class="cite" title="' + esc(g.sources[src].title) + '">[' + esc(g.sources[src].short || "source") + "]</span>";
+    var reg = g.sources[src];
+    if (reg && reg.url) return ' <a class="cite" href="' + esc(reg.url) + '" target="_blank" rel="noopener" title="' + esc(reg.title) + '">[' + esc(reg.short) + "]</a>";
+    if (reg) return ' <span class="cite" title="' + esc(reg.title) + '">[' + esc(reg.short || "source") + "]</span>";
     return ' <a class="cite" href="' + esc(src) + '" target="_blank" rel="noopener">[source]</a>';
   }
 
@@ -207,7 +209,9 @@
 
   function sourcesHtml(c) {
     return '<ul class="sources">' + (c.sources || []).map(function (s) {
-      if (g.sources[s]) return "<li>" + esc(g.sources[s].title) + "</li>";
+      var reg = g.sources[s];
+      if (reg && reg.url) return '<li><a href="' + esc(reg.url) + '" target="_blank" rel="noopener">' + esc(reg.title) + "</a></li>";
+      if (reg) return "<li>" + esc(reg.title) + "</li>";
       var label = s.replace(/^https?:\/\/(www\.)?/, "").replace(/_/g, " ");
       return '<li><a href="' + esc(s) + '" target="_blank" rel="noopener">' + esc(decodeURIComponent(label)) + "</a></li>";
     }).join("") + "</ul>";
@@ -215,10 +219,12 @@
 
   function panelHtml(c) {
     var person = c.sector === "people";
+    var posterCited = c.sources.some(function (s) { return g.sources[s] && g.sources[s].posterFamily; });
     var founders = c.founders.length ? '<ul class="people">' + c.founders.map(function (f) {
       var from = !f.f ? "" : g.byId[f.f] ? " <span class=\"muted\">from</span> " + companyLink(f.f)
         : ' <span class="muted">from ' + esc(f.f) + "</span>";
-      return "<li>" + esc(f.n) + from + "</li>";
+      var cite = f.s ? citeHtml(f.s) : posterCited ? ' <span class="poster-tag" title="Only the 1984 poster says this">poster only</span>' : "";
+      return "<li>" + esc(f.n) + from + cite + "</li>";
     }).join("") + "</ul>" : '<p class="muted">Not listed.</p>';
 
     return '<header class="panel-head">' +
@@ -226,6 +232,8 @@
       esc(Graph.SECTORS[c.sector].label) + " · " + years(c) + "</p>" +
       '<h2 id="panel-title">' + esc(c.name) + "</h2>" +
       (c.fate ? '<p class="fate">' + esc(c.fate) + "</p>" : "") +
+      (Insights.posterOnly(g, c) ? '<p class="single-source">Single source: only the 1984 SEMI poster (and its author\'s other writing) backs this entry. ' +
+        "No independent source has been found yet.</p>" : "") +
       "</header>" +
       (c.note ? '<p class="note">' + esc(c.note) + "</p>" : "") +
       "<section><h3>Roots</h3>" + traceHtml(c) + "</section>" +

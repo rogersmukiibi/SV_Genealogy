@@ -8,7 +8,7 @@
  *
  * Company format:
  *   { id, name, founded, ended?, sector, fate, note,
- *     founders: [{ n: person, f: company id or plain-text origin }],
+ *     founders: [{ n: person, f: company id or plain-text origin, s?: independent source }],
  *     sources: ["semi1984" | url, ...] }
  *   `ended` is the year the company stopped being independent (acquired or closed).
  *   sector: chips, computers, networking, software, internet, games, vc, corporate, people.
@@ -30,7 +30,9 @@
  *   every other root it descends from.
  *
  * Every company and every link must cite a source. Where sources disagree,
- * say so in the company's note and cite both.
+ * say so in the company's note and cite both. Sources marked posterFamily
+ * (the 1984 poster and its author's other writing) do not count as
+ * independent; entries backed only by them are flagged on the site.
  */
 window.GENEALOGY = {
   eras: [
@@ -59,7 +61,11 @@ window.GENEALOGY = {
   ],
 
   sources: {
-    semi1984: { short: "SEMI 1984 poster", title: "SEMI, “Silicon Valley Genealogy” poster (1984), developed by Don C. Hoefler" }
+    semi1984: { short: "SEMI 1984 poster", title: "SEMI, “Silicon Valley Genealogy” poster (1984), developed by Don C. Hoefler",
+      posterFamily: true },
+    hoefler1971: { short: "Hoefler 1971", posterFamily: true,
+      title: "Don C. Hoefler, “Silicon Valley U.S.A.”, Electronic News, January 1971 — the poster's author, so not independent of it",
+      url: "https://archive.computerhistory.org/resources/access/text/2012/03/102689013-01-05-acc.pdf" }
   },
 
   companies: [],

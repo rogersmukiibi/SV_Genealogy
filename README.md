@@ -19,13 +19,6 @@ It covers **1956–2007**, from the transistor to Web 2.0: 155 companies, 5 peop
 
 Open `index.html` in a browser. It works straight from the file system, with no server needed.
 
-## Deploying to GitHub Pages
-
-1. Push this folder to a GitHub repository.
-2. In the repository, go to **Settings → Pages → Build and deployment**, set **Source** to *Deploy from a branch*, and choose `main` / `(root)`.
-
-`.nojekyll` stops GitHub from running Jekyll over the files.
-
 ## Adding companies
 
 Data is organised by era. [`data/core.js`](data/core.js) defines the eras, the shared citation registry and the format. Each era has one file in [`data/eras/`](data/eras/), named `<from>-<to>-<era>.js`. It holds the companies founded in that era and every link into them:
@@ -66,4 +59,4 @@ js/ui.js            search, details panel, filters, timeline player, routing
 
 ## Sources
 
-The semiconductor backbone up to 1981 follows SEMI's 1984 "Silicon Valley Genealogy" poster, developed by Don C. Hoefler from a concept by Jack Yelverton. The poster inspired the map; its image is not included here. Everything else is checked against the sources on each company and link. Where sources disagree (for example the poster versus the Computer History Museum on Xicor's founders), the company's note records both.
+The semiconductor backbone up to 1981 follows SEMI's 1984 "Silicon Valley Genealogy" poster, developed by Don C. Hoefler from a concept by Jack Yelverton. The poster inspired the map; its image is not included here. The poster is not treated as ground truth: its claims have been checked against independent sources (museum archives and oral histories, trade press, company filings and histories). Corroborated claims carry their own citation; where sources disagree, the company's note records both versions; claims backed only by the poster, or by its author's other writing, are flagged "poster only" on the site. Everything else is checked against the sources on each company and link.

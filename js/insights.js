@@ -25,8 +25,14 @@
   }
 
   function sourceKind(s) {
-    if (s === "semi1984") return "poster";
+    if (s === "semi1984" || s === "hoefler1971") return "poster";
     return /wikipedia\.org/.test(s) ? "wikipedia" : "other";
+  }
+
+  // Entries and links whose only support is the 1984 poster (or its author's other writing).
+  function posterOnly(g, item) {
+    var src = [].concat(item.sources || item.source || []);
+    return src.length > 0 && src.every(function (s) { return g.sources[s] && g.sources[s].posterFamily; });
   }
 
   function nearestRoot(g, c) {
@@ -76,6 +82,10 @@
     if (s.parents.length) {
       var p = s.parents[0];
       out.push("Biggest parent: " + g.byId[p.id].name + ", with " + p.n + " link" + (p.n === 1 ? "" : "s") + " into this era.");
+    }
+    var single = s.companies.filter(function (c) { return posterOnly(g, c); }).length;
+    if (single) {
+      out.push(single + " of " + s.companies.length + " rest on the 1984 poster alone, with no independent source yet.");
     }
     if (s.byRoot.length) {
       out.push("Nearest root: " + s.byRoot.map(function (r) { return g.byId[r.id].name + " " + r.n; }).join(", ") + ".");
@@ -133,7 +143,7 @@
       "<section><h3>No documented path to a root</h3>" + list(s.noRoot) + "</section>" +
       (s.unknownFate.length ? "<section><h3>Fate not recorded</h3>" + list(s.unknownFate) + "</section>" : "") +
       "<section><h3>Where the citations come from</h3><p class=\"muted\">" +
-      (s.cites.poster || 0) + " from the 1984 SEMI poster, " + (s.cites.wikipedia || 0) + " from Wikipedia, " +
+      (s.cites.poster || 0) + " from the 1984 SEMI poster or its author, " + (s.cites.wikipedia || 0) + " from Wikipedia, " +
       (s.cites.other || 0) + " from other sources (museum archives, company histories, filings and press).</p></section>" +
       nav;
   }
@@ -148,9 +158,19 @@
     g.companies.forEach(function (c) {
       if (c.sources.length === 1 && c.sources[0] === "semi1984") lastPoster = Math.max(lastPoster, c.founded);
     });
+    var singleC = g.companies.filter(function (c) { return posterOnly(g, c); }).length;
+    var singleL = g.links.filter(function (l) { return posterOnly(g, l); }).length;
+    var singleF = 0;
+    g.companies.forEach(function (c) {
+      if (c.sources.some(function (s) { return g.sources[s] && g.sources[s].posterFamily; })) {
+        singleF += c.founders.filter(function (f) { return !f.s; }).length;
+      }
+    });
     var items = [
-      "<strong>Coverage.</strong> Up to " + lastPoster + " the chip companies follow the 1984 SEMI poster, which aimed to be complete. " +
+      "<strong>Coverage.</strong> Up to " + lastPoster + " the chip companies come from the 1984 SEMI poster, which aimed to be complete. " +
         "After that the map is a curated selection of companies with documented ties, not a census.",
+      "<strong>The poster is not ground truth.</strong> Poster claims are being checked against independent sources; where they disagree, notes cite both. " +
+        singleC + " companies, " + singleL + " links and " + singleF + " founder origins still rest on the poster alone, and their panels say so.",
       "<strong>Roots.</strong> Traces stop at " + g.roots.length + " roots: " +
         g.roots.map(function (r) { return h.companyLink(r.id); }).join(", ") + ". " + noRoot.length +
         " companies have no documented path to any of them; their panels say so rather than guess.",
@@ -166,5 +186,5 @@
     return "<ul>" + items.map(function (i) { return "<li>" + i + "</li>"; }).join("") + "</ul>";
   }
 
-  window.Insights = { eraOf: eraOf, stats: stats, eraHtml: eraHtml, gapsHtml: gapsHtml };
+  window.Insights = { eraOf: eraOf, stats: stats, eraHtml: eraHtml, gapsHtml: gapsHtml, posterOnly: posterOnly };
 })();

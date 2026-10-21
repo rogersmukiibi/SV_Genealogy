@@ -1,5 +1,5 @@
 /*
- * Roots (before 1955): Institutions and companies founded before Shockley's lab that fed people or money into the Valley.
+ * Roots (before 1955): Institutions and companies founded before Shockley's lab that supplied the Valley with people, money or ideas.
  * Companies founded in this era, and every link into them.
  * Format and link types: see data/core.js.
  */
@@ -16,7 +16,7 @@ GENEALOGY.add({
       fate: "Now Nokia Bell Labs",
       note: "Walter Brattain, John Bardeen and William Shockley invented the transistor here in 1947.",
       founders: [
-        { n: "AT&T / Western Electric", f: "" }],
+        { n: "AT&T / Western Electric", f: "", s: "https://en.wikipedia.org/wiki/Bell_Labs" }],
       sources: ["semi1984", "https://en.wikipedia.org/wiki/Bell_Labs", "https://www.computerhistory.org/siliconengine/companies/"] },
     { id: "fairchild-camera", name: "Fairchild Camera and Instrument", founded: 1927, ended: 1979, sector: "corporate",
       fate: "Acquired by Schlumberger 1979",
