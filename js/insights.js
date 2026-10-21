@@ -31,6 +31,7 @@
 
   // Entries and links whose only support is the 1984 poster (or its author's other writing).
   function posterOnly(g, item) {
+    if (item.unconfirmed) return true;
     var src = [].concat(item.sources || item.source || []);
     return src.length > 0 && src.every(function (s) { return g.sources[s] && g.sources[s].posterFamily; });
   }
@@ -186,5 +187,77 @@
     return "<ul>" + items.map(function (i) { return "<li>" + i + "</li>"; }).join("") + "</ul>";
   }
 
-  window.Insights = { eraOf: eraOf, stats: stats, eraHtml: eraHtml, gapsHtml: gapsHtml, posterOnly: posterOnly };
+  // ---- exits: acquisitions and closures ----
+
+  var EXIT_KINDS = {
+    acquired: { label: "Acquired or merged", re: /\b(acqui|bought|sold|merg|absorb|folded into|taken private|purchas|went to|passed to|donated|transferred)/ },
+    closed: { label: "Closed", re: /\b(dissolved|bankrupt|chapter 11|ceased|shut|liquidat|defunct)|(?<!deal )\bclosed\b/ },
+    renamed: { label: "Renamed or restructured", re: /\b(renamed|spun off|split)/ }
+  };
+
+  // Classify how a company stopped being independent: find the part of its
+  // fate text that mentions the end year, then prefer acquisition wording
+  // over closure, and closure over renaming.
+  function exitKind(c) {
+    // Roots (founded before the timeline starts) are not counted, matching the year counter.
+    if (!c.ended || c.sector === "people" || c.founded < Graph.LAYOUT.firstYear) return null;
+    var text = (c.fate || "").toLowerCase();
+    var clauses = text.split(/;|\.\s/);
+    var clause = clauses.filter(function (x) { return x.indexOf(String(c.ended)) !== -1; })[0] || text;
+    var kinds = ["acquired", "closed", "renamed"];
+    for (var i = 0; i < kinds.length; i++) if (EXIT_KINDS[kinds[i]].re.test(clause)) return kinds[i];
+    for (i = 0; i < kinds.length; i++) if (EXIT_KINDS[kinds[i]].re.test(text)) return kinds[i];
+    return "other";
+  }
+
+  function exitsByYear(g) {
+    var out = {};
+    g.companies.forEach(function (c) {
+      var k = exitKind(c);
+      if (!k) return;
+      (out[c.ended] = out[c.ended] || []).push({ c: c, kind: k });
+    });
+    return out;
+  }
+
+  function exitsHtml(g, year, h) {
+    var by = exitsByYear(g), all = [];
+    Object.keys(by).forEach(function (y) { if (+y <= year) all = all.concat(by[y]); });
+    var founded = g.companies.filter(function (c) {
+      return c.sector !== "people" && c.founded <= year && c.founded >= Graph.LAYOUT.firstYear;
+    });
+    var noFate = founded.filter(function (c) { return !c.fate; }).length;
+    var counts = count(all, function (e) { return e.kind; });
+    var busiest = Object.keys(by).filter(function (y) { return +y <= year; })
+      .sort(function (a, b) { return by[b].length - by[a].length || a - b; })[0];
+    var row = function (e) {
+      return "<li>" + h.companyLink(e.c.id) + ' <span class="badge exit-' + e.kind + '">' +
+        h.esc((EXIT_KINDS[e.kind] || { label: "Other" }).label) + '</span><br><small class="muted">' + h.esc(e.c.fate) + "</small></li>";
+    };
+    var thisYear = by[year] || [];
+    var years = Object.keys(by).filter(function (y) { return +y <= year; }).sort(function (a, b) { return b - a; });
+    var findings = [
+      all.length + " of " + founded.length + " companies founded by " + year + " had been acquired, merged, closed or restructured.",
+      Object.keys(EXIT_KINDS).filter(function (k) { return counts[k]; }).map(function (k) {
+        return EXIT_KINDS[k].label + ": " + counts[k];
+      }).join(" · ") + (counts.other ? " · Other: " + counts.other : "") + ".",
+      busiest ? "Busiest year: " + busiest + ", with " + by[busiest].length + " exits." : ""
+    ].filter(Boolean);
+    return '<header class="panel-head"><p class="eyebrow">Exits · up to ' + year + "</p>" +
+      '<h2 id="panel-title">Acquired or closed</h2></header>' +
+      '<p class="note">Companies that stopped being independent, up to the year on the timeline. Drag the slider to change the year.</p>' +
+      '<section><h3>Findings</h3><ul class="findings">' + findings.map(function (f) { return "<li>" + h.esc(f) + "</li>"; }).join("") + "</ul></section>" +
+      "<section><h3>In " + year + "</h3>" + (thisYear.length ? '<ul class="rel exits">' + thisYear.map(row).join("") + "</ul>" : '<p class="muted">No exits recorded this year.</p>') + "</section>" +
+      "<section><h3>Every exit up to " + year + "</h3>" + years.map(function (y) {
+        return '<p class="exit-year">' + y + '</p><ul class="rel exits">' + by[y].map(row).join("") + "</ul>";
+      }).join("") + "</section>" +
+      '<p class="muted small">Classified from each company\'s fate text. ' + noFate +
+      " companies founded by " + year + " have no recorded fate, so they may be missing here.</p>";
+  }
+
+  window.Insights = {
+    exitKind: exitKind,
+    exitsByYear: exitsByYear,
+    exitsHtml: exitsHtml,
+    EXIT_KINDS: EXIT_KINDS, eraOf: eraOf, stats: stats, eraHtml: eraHtml, gapsHtml: gapsHtml, posterOnly: posterOnly };
 })();

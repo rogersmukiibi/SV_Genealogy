@@ -29,6 +29,7 @@
     <div id="map" class="map" tabindex="0" aria-label="Genealogy map. Drag to pan, scroll or pinch to zoom.">
       <svg id="axis" class="axis" aria-hidden="true"></svg>
       <svg id="canvas" class="canvas" role="img" aria-label="Company genealogy graph"></svg>
+      <div id="lane-axis" class="lane-axis" aria-hidden="true"></div>
       <div id="year-badge" class="year-badge" aria-live="polite"></div>
     </div>
 
@@ -41,6 +42,8 @@
     <aside class="legend" aria-label="Legend and filters">
       <button class="legend-toggle" type="button" aria-expanded="true" aria-controls="legend-body">Legend &amp; filters</button>
       <div id="legend-body" class="legend-body">
+        <p class="legend-title">Arrange by</p>
+        <div id="arrange" class="segmented" role="group" aria-label="Arrange the map by"></div>
         <p class="legend-title">Sectors</p>
         <div id="sector-filters" class="chips"></div>
         <p class="legend-title">Links</p>
@@ -59,6 +62,8 @@
   <footer class="timeline" aria-label="Timeline">
     <button id="play" class="btn play" type="button" aria-label="Play timeline">▶</button>
     <div class="timeline-track">
+      <svg id="pulse" class="pulse" viewBox="0 0 1000 36" preserveAspectRatio="none" role="img"
+           aria-label="Companies founded each year (above the line) and companies acquired or closed (below)"></svg>
       <input id="year" type="range" min="1955" max="2007" step="1" value="2007" aria-label="Show the Valley as of year">
       <div id="ticks" class="ticks" aria-hidden="true"></div>
     </div>

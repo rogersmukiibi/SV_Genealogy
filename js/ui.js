@@ -5,7 +5,21 @@
 (function () {
   "use strict";
 
-  var g = Graph.build(window.GENEALOGY);
+  // The arrangement (sector / root / compact lanes) is a per-viewer preference.
+  var ARRANGE_KEY = "sv-genealogy-arrange";
+  function loadArrange() {
+    try { var a = localStorage.getItem(ARRANGE_KEY); return Graph.ARRANGEMENTS[a] ? a : "sector"; }
+    catch (e) { return "sector"; }
+  }
+  var arrange = loadArrange();
+
+  // Spread rows to fill the map area at the starting zoom (see MapView's initial view).
+  function buildGraph() {
+    return Graph.build(window.GENEALOGY, {
+      viewHeight: document.getElementById("map").clientHeight, zoom: 0.85, arrange: arrange
+    });
+  }
+  var g = buildGraph();
   var L = Graph.LAYOUT;
   var MIN_YEAR = L.firstYear, MAX_YEAR = L.lastYear - 1;
   var $ = function (id) { return document.getElementById(id); };
@@ -60,11 +74,45 @@
       total++;
       if (c.ended && c.ended <= state.year) ended++;
     });
-    $("count").textContent = total + " companies · " + ended + " acquired or closed" +
-      (people ? " · " + people + " people" : "");
+    $("count").innerHTML = total + " companies · " +
+      '<a href="#/exits" title="Which companies were acquired or closed">' + ended + " acquired or closed</a>" +
+      (people ? " · " + people + (people === 1 ? " person" : " people") : "");
+    var cur = document.querySelector("#pulse .current");
+    if (cur) cur.classList.remove("current");
+    var now = document.querySelector('#pulse [data-year="' + state.year + '"]');
+    if (now) now.classList.add("current");
+    if (state.selected === "exits") renderExits();
+  }
+
+  // Rebuild the layout after a change of arrangement, keeping selection and filters.
+  function relayout() {
+    g = buildGraph();
+    MapView.setGraph(g);
+    applyFilter();
+    glideNext = false;
+    route();
+  }
+
+  function buildArrange() {
+    var box = $("arrange");
+    Object.keys(Graph.ARRANGEMENTS).forEach(function (k) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.textContent = Graph.ARRANGEMENTS[k];
+      b.setAttribute("aria-pressed", String(k === arrange));
+      b.addEventListener("click", function () {
+        if (k === arrange) return;
+        arrange = k;
+        try { localStorage.setItem(ARRANGE_KEY, k); } catch (e) { /* preference only */ }
+        box.querySelectorAll("button").forEach(function (x) { x.setAttribute("aria-pressed", String(x === b)); });
+        relayout();
+      });
+      box.appendChild(b);
+    });
   }
 
   function buildLegend() {
+    buildArrange();
     var sectorBox = $("sector-filters");
     Object.keys(Graph.SECTORS).forEach(function (k) {
       var b = document.createElement("button");
@@ -103,6 +151,7 @@
     function setOpen(open) {
       legend.classList.toggle("collapsed", !open);
       toggle.setAttribute("aria-expanded", String(open));
+      MapView.refresh();   // the lane axis sits beside the legend
     }
     toggle.addEventListener("click", function () { setOpen(legend.classList.contains("collapsed")); });
     setOpen(window.innerWidth > 760);
@@ -135,7 +184,7 @@
     var tick = function () {
       applyFilter();
       MapView.showYearBadge(state.year, true);
-      MapView.ensureXVisible(Graph.xForYear(state.year) + L.nodeWidth);
+      MapView.ensureYearVisible(state.year);
     };
     tick();
     playTimer = setInterval(function () {
@@ -145,14 +194,62 @@
     }, 650);
   }
 
+  // Founded (above the line) and exits (below) per year, under the slider.
+  function buildPulse() {
+    var NS = "http://www.w3.org/2000/svg", svg = $("pulse");
+    var exits = Insights.exitsByYear(g), founded = {};
+    g.companies.forEach(function (c) {
+      if (c.sector !== "people" && c.founded >= MIN_YEAR) founded[c.founded] = (founded[c.founded] || 0) + 1;
+    });
+    var maxUp = 1, maxDown = 1;
+    for (var y = MIN_YEAR; y <= MAX_YEAR; y++) {
+      maxUp = Math.max(maxUp, founded[y] || 0);
+      maxDown = Math.max(maxDown, (exits[y] || []).length);
+    }
+    var step = 1000 / (MAX_YEAR - MIN_YEAR), bw = Math.max(4, step * 0.7), base = 20;
+    var rect = function (parent, x, y0, h, cls) {
+      var r = document.createElementNS(NS, "rect");
+      r.setAttribute("x", x); r.setAttribute("y", y0); r.setAttribute("width", bw); r.setAttribute("height", Math.max(0, h));
+      r.setAttribute("class", cls);
+      parent.appendChild(r);
+    };
+    for (y = MIN_YEAR; y <= MAX_YEAR; y++) {
+      var gEl = document.createElementNS(NS, "g"), x = (y - MIN_YEAR) * step - bw / 2;
+      gEl.setAttribute("data-year", y);
+      var ex = exits[y] || [], kinds = { acquired: 0, closed: 0, renamed: 0, other: 0 };
+      ex.forEach(function (e) { kinds[e.kind]++; });
+      var t = document.createElementNS(NS, "title");
+      t.textContent = y + ": " + (founded[y] || 0) + " founded" +
+        (ex.length ? ", " + kinds.acquired + " acquired or merged, " + kinds.closed + " closed" +
+          (kinds.renamed + kinds.other ? ", " + (kinds.renamed + kinds.other) + " other" : "") : "");
+      gEl.appendChild(t);
+      rect(gEl, x - step * 0.15, 0, 36, "pulse-hit");
+      rect(gEl, x, base - (founded[y] || 0) / maxUp * (base - 2), (founded[y] || 0) / maxUp * (base - 2), "pulse-founded");
+      var yy = base + 1;
+      ["acquired", "closed", "renamed", "other"].forEach(function (k) {
+        var h = kinds[k] / maxDown * 14;
+        if (h) { rect(gEl, x, yy, h, "pulse-" + k); yy += h; }
+      });
+      gEl.addEventListener("click", (function (year) {
+        return function () { stopPlay(); state.year = year; applyFilter(); MapView.ensureYearVisible(year); };
+      })(y));
+      svg.appendChild(gEl);
+    }
+    var line = document.createElementNS(NS, "line");
+    line.setAttribute("x1", -20); line.setAttribute("x2", 1020); line.setAttribute("y1", base + 0.5); line.setAttribute("y2", base + 0.5);
+    line.setAttribute("class", "pulse-base");
+    svg.appendChild(line);
+  }
+
   function bindTimeline() {
+    buildPulse();
     $("year").min = MIN_YEAR;
     $("year").max = MAX_YEAR;
     $("year").addEventListener("input", function (e) {
       stopPlay();
       state.year = +e.target.value;
       applyFilter();
-      MapView.ensureXVisible(Graph.xForYear(state.year) + L.nodeWidth);
+      MapView.ensureYearVisible(state.year);
     });
     $("play").addEventListener("click", function () { playTimer ? stopPlay() : startPlay(); });
   }
@@ -232,7 +329,9 @@
       esc(Graph.SECTORS[c.sector].label) + " · " + years(c) + "</p>" +
       '<h2 id="panel-title">' + esc(c.name) + "</h2>" +
       (c.fate ? '<p class="fate">' + esc(c.fate) + "</p>" : "") +
-      (Insights.posterOnly(g, c) ? '<p class="single-source">Single source: only the 1984 SEMI poster (and its author\'s other writing) backs this entry. ' +
+      (c.unconfirmed ? '<p class="single-source">Unconfirmed: only the 1984 SEMI poster records this entry. The other sources cited ' +
+        "discuss it, as the note explains, but none confirms it.</p>"
+        : Insights.posterOnly(g, c) ? '<p class="single-source">Single source: only the 1984 SEMI poster (and its author\'s other writing) backs this entry. ' +
         "No independent source has been found yet.</p>" : "") +
       "</header>" +
       (c.note ? '<p class="note">' + esc(c.note) + "</p>" : "") +
@@ -288,10 +387,62 @@
     panel.scrollTop = 0;
     updateInset();
     MapView.setFocus(null);
-    var x0 = era.from === null ? -24 : Graph.xForYear(era.from) - 16;
-    var x1 = era.from === null ? L.rootsWidth - 16 : Graph.xForYear(era.to + 1) - 16;
-    MapView.showRange(x0, x1);
+    var st = Graph.yearBox(g, era.from === null ? era.to : era.from).strip;
+    var x0 = (era.from === null ? -24 : Graph.xForYear(era.from) - 16) - st.shift;
+    var x1 = (era.from === null ? L.rootsWidth - 16 : Graph.xForYear(era.to + 1) - 16) - st.shift;
+    MapView.showRange(x0, x1, st.y0, st.y1);
     document.title = era.label + " · Silicon Valley Genealogy";
+  }
+
+  function linkCardHtml(c, role) {
+    return '<div class="link-card"><p class="eyebrow"><span class="dot sector-' + c.sector + '"></span>' + role + " · " +
+      esc(years(c)) + "</p>" + '<p class="link-card-name">' + companyLink(c.id) + "</p>" +
+      (c.fate ? '<p class="muted">' + esc(c.fate) + "</p>" : "") + "</div>";
+  }
+
+  function showLink(from, to, type) {
+    var l = g.links.filter(function (x) { return x.from === from && x.to === to && x.type === type; })[0];
+    if (!l) return close();
+    var p = g.byId[from], c = g.byId[to];
+    state.selected = "link";
+    if (state.year < Math.max(l.year, c.founded)) { stopPlay(); state.year = Math.min(MAX_YEAR, Math.max(l.year, c.founded)); }
+    applyFilter();
+    $("panel-body").innerHTML = '<header class="panel-head"><p class="eyebrow"><span class="badge link-' + l.type + '">' +
+      esc(Graph.LINK_TYPES[l.type].label) + "</span> " + l.year + "</p>" +
+      '<h2 id="panel-title">' + esc(p.name) + " → " + esc(c.name) + "</h2></header>" +
+      '<p class="note">' + esc(l.note) + citeHtml(l.source) + "</p>" +
+      '<p class="muted link-type-desc">' + esc(Graph.LINK_TYPES[l.type].desc) + ".</p>" +
+      "<section><h3>The two ends</h3>" + linkCardHtml(p, "From") + linkCardHtml(c, "To") + "</section>";
+    var panel = $("panel");
+    panel.hidden = false;
+    panel.scrollTop = 0;
+    updateInset();
+    MapView.focusLink(l);
+    document.title = p.name + " → " + c.name + " · Silicon Valley Genealogy";
+  }
+
+  function exitedIds() {
+    var by = Insights.exitsByYear(g), ids = [];
+    Object.keys(by).forEach(function (y) { if (+y <= state.year) by[y].forEach(function (e) { ids.push(e.c.id); }); });
+    return ids;
+  }
+
+  function renderExits() {
+    var panel = $("panel"), top = panel.scrollTop;
+    $("panel-body").innerHTML = Insights.exitsHtml(g, state.year, helpers);
+    panel.scrollTop = top;
+    MapView.focusIds(exitedIds());
+  }
+
+  function showExits() {
+    state.selected = "exits";
+    applyFilter();
+    var panel = $("panel");
+    panel.hidden = false;
+    panel.scrollTop = 0;
+    updateInset();
+    renderExits();
+    document.title = "Acquired or closed · Silicon Valley Genealogy";
   }
 
   function close() {
@@ -307,8 +458,11 @@
   var glideNext = true;
 
   function route() {
+    var link = location.hash.match(/^#\/link\/([\w-]+)\/([\w-]+)\/(\w+)/);
     var m = location.hash.match(/^#\/(company|era)\/([\w-]+)/);
-    if (m && m[1] === "company") select(m[2], { glide: glideNext });
+    if (link) showLink(link[1], link[2], link[3]);
+    else if (location.hash === "#/exits") showExits();
+    else if (m && m[1] === "company") select(m[2], { glide: glideNext });
     else if (m) showEra(m[2]);
     else close();
     glideNext = true;
@@ -418,7 +572,8 @@
       if (id) go(id, false);
       else if (state.selected) go(null);
     },
-    onEra: function (id) { location.hash = "#/era/" + id; }
+    onEra: function (id) { location.hash = "#/era/" + id; },
+    onLink: function (l) { location.hash = "#/link/" + l.from + "/" + l.to + "/" + l.type; }
   });
   buildLegend();
   bindTimeline();

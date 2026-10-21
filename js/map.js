@@ -17,6 +17,7 @@
   var visibleNode = {};
   var onSelect = function () {};
   var onEra = function () {};
+  var onLink = function () {};
   var anim = null;
 
   function el(name, attrs, parent) {
@@ -41,7 +42,69 @@
     return lines;
   }
 
+  // Boxes per row, so lines can be routed through the gaps between rows and
+  // cross rows only where no box sits.
+  var rowBoxes = {};
+  function indexRows() {
+    rowBoxes = {};
+    g.companies.forEach(function (c) { (rowBoxes[c.row] = rowBoxes[c.row] || []).push(c); });
+  }
+  function rowBlocked(row, x0, x1, except) {
+    return (rowBoxes[row] || []).some(function (c) {
+      return except.indexOf(c) === -1 && c.x < x1 && c.x + W > x0;
+    });
+  }
+  function gutterBelow(c) { return c.y + H + (g.rowHeight - H) / 2; }
+  function gutterAbove(c) { return c.y - (g.rowHeight - H) / 2; }
+
+  // Polyline with rounded corners.
+  function rounded(pts) {
+    var d = "M" + pts[0][0] + "," + pts[0][1];
+    for (var i = 1; i < pts.length - 1; i++) {
+      var a = pts[i - 1], b = pts[i], n = pts[i + 1];
+      var r = Math.min(8, Math.hypot(b[0] - a[0], b[1] - a[1]) / 2, Math.hypot(n[0] - b[0], n[1] - b[1]) / 2);
+      var ux = Math.sign(b[0] - a[0]), uy = Math.sign(b[1] - a[1]);
+      var vx = Math.sign(n[0] - b[0]), vy = Math.sign(n[1] - b[1]);
+      d += " L" + (b[0] - ux * r) + "," + (b[1] - uy * r) + " Q" + b[0] + "," + b[1] + " " + (b[0] + vx * r) + "," + (b[1] + vy * r);
+    }
+    var last = pts[pts.length - 1];
+    return d + " L" + last[0] + "," + last[1];
+  }
+
   function edgePath(p, c) {
+    if (p.strip !== c.strip) return curvePath(p, c);
+    var x1 = p.x + W, y1 = p.y + H / 2, x2 = c.x, y2 = c.y + H / 2;
+    if (x2 < x1 + 24) return curvePath(p, c);
+    var ends = [p, c];
+    if (p.row === c.row) {
+      // Same row: straight if nothing sits between, else dip into the gap below.
+      if (!rowBlocked(p.row, x1, x2, ends)) return "M" + x1 + "," + y1 + " L" + x2 + "," + y2;
+      var gy = gutterBelow(p);
+      return rounded([[x1, y1], [x1 + 8, y1], [x1 + 8, gy], [x2 - 8, gy], [x2 - 8, y2], [x2, y2]]);
+    }
+    var down = c.row > p.row;
+    var gyP = down ? gutterBelow(p) : gutterAbove(p);
+    var gyC = down ? gutterAbove(c) : gutterBelow(c);
+    if (Math.abs(gyP - gyC) < 1) {
+      return rounded([[x1, y1], [x1 + 8, y1], [x1 + 8, gyP], [x2 - 8, gyP], [x2 - 8, y2], [x2, y2]]);
+    }
+    // Cross the rows in between at the first vertical corridor free of boxes.
+    var lo = Math.min(p.row, c.row) + 1, hi = Math.max(p.row, c.row) - 1;
+    var candidates = [x2 - 8];
+    for (var r = lo; r <= hi; r++) (rowBoxes[r] || []).forEach(function (b) {
+      if (b.x - 8 > x1 + 8 && b.x - 8 < x2 - 8) candidates.push(b.x - 8);
+    });
+    candidates.sort(function (a, b) { return b - a; });
+    var vx = x2 - 8;
+    for (var i = 0; i < candidates.length; i++) {
+      var cx = candidates[i], free = true;
+      for (var rr = lo; rr <= hi && free; rr++) if (rowBlocked(rr, cx - 2, cx + 2, ends)) free = false;
+      if (free) { vx = cx; break; }
+    }
+    return rounded([[x1, y1], [x1 + 8, y1], [x1 + 8, gyP], [vx, gyP], [vx, gyC], [x2 - 8, gyC], [x2 - 8, y2], [x2, y2]]);
+  }
+
+  function curvePath(p, c) {
     if (c.x >= p.x + W + 8) {
       var x1 = p.x + W, y1 = p.y + H / 2, x2 = c.x, y2 = c.y + H / 2;
       var dx = Math.max(40, (x2 - x1) * 0.5);
@@ -61,33 +124,70 @@
     var edges = el("g", { "class": "edges" }, world);
     var nodes = el("g", { "class": "nodes" }, world);
 
-    // Eras and year grid
-    g.eras.forEach(function (era, i) {
-      var x0 = era.from === null ? -24 : Graph.xForYear(era.from) - 16;
-      var x1 = era.from === null ? L.rootsWidth - 16 : Graph.xForYear(era.to + 1) - 16;
-      el("rect", { x: x0, y: 0, width: x1 - x0, height: g.height, "class": "era " + (i % 2 ? "era-b" : "era-a") }, eras);
-      var t = el("text", { x: x0 + 14, y: 72, "class": "era-label", "data-era": era.id, role: "link" }, eras);
-      t.textContent = era.label;
-      var tip = el("title", {}, t);
-      tip.textContent = "Show findings for " + era.label;
-    });
-    for (var y = L.firstYear; y <= L.lastYear; y++) {
-      var gx = Graph.xForYear(y) - 16;
-      el("line", { x1: gx, y1: 88, x2: gx, y2: g.height, "class": "gridline" }, eras);
-      if (Graph.yearHasQuarters(y)) {
-        for (var q = 1; q < 4; q++) {
-          var qx = gx + q * L.quarterWidth;
-          el("line", { x1: qx, y1: 88, x2: qx, y2: g.height, "class": "gridline gridline-q" }, eras);
+    // Eras, year grid and (when wrapped) year labels, strip by strip.
+    g.strips.forEach(function (st) {
+      st.eras.forEach(function (era) {
+        var i = g.eras.indexOf(era);
+        var x0 = (era.from === null ? -24 : Graph.xForYear(era.from) - 16) - st.shift;
+        var x1 = (era.from === null ? L.rootsWidth - 16 : Graph.xForYear(era.to + 1) - 16) - st.shift;
+        el("rect", { x: x0, y: st.y0, width: x1 - x0, height: st.y1 - st.y0, "class": "era " + (i % 2 ? "era-b" : "era-a") }, eras);
+        var t = el("text", { x: x0 + 14, y: st.y0 + 72, "class": "era-label", "data-era": era.id, role: "link" }, eras);
+        t.textContent = era.label;
+        var tip = el("title", {}, t);
+        tip.textContent = "Show findings for " + era.label;
+      });
+      var first = st.from === -Infinity ? L.firstYear : st.from;
+      for (var y = first; y <= st.to + 1; y++) {
+        var gx = Graph.xForYear(y) - 16 - st.shift;
+        el("line", { x1: gx, y1: st.y0 + 88, x2: gx, y2: st.y1, "class": "gridline" }, eras);
+        if (y > st.to) continue;
+        if (Graph.yearHasQuarters(y)) {
+          for (var q = 1; q < 4; q++) {
+            var qx = gx + q * L.quarterWidth;
+            el("line", { x1: qx, y1: st.y0 + 88, x2: qx, y2: st.y1, "class": "gridline gridline-q" }, eras);
+          }
+        }
+        if (g.strips.length > 1) {
+          var yl = el("text", { x: (Graph.xForYear(y) + Graph.xForYear(y + 1) - 16) / 2 - st.shift, y: st.y0 + 40, "class": "year-label" }, eras);
+          yl.textContent = y;
         }
       }
+    });
+
+    // Lanes: a band per sector or root, labelled at the start of every era.
+    if (g.lanes.length > 1) {
+      g.lanes.forEach(function (lane, i) {
+        var st = g.strips[lane.strip];
+        el("rect", { x: -24, y: lane.y0 - 30, width: st.x1 - st.shift + 24, height: lane.y1 - lane.y0 + 44,
+          "class": "lane " + (i % 2 ? "lane-b" : "lane-a") }, eras);
+        st.eras.forEach(function (era) {
+          var lx = (era.from === null ? -10 : Graph.xForYear(era.from) - 2) - st.shift;
+          var t = el("text", { x: lx, y: lane.y0 - 10, "class": "lane-label" }, eras);
+          t.textContent = lane.label;
+        });
+      });
     }
 
+    indexRows();
     g.links.forEach(function (l) {
       var p = g.byId[l.from], c = g.byId[l.to];
-      var path = el("path", { d: edgePath(p, c), "class": "edge link-" + l.type }, edges);
-      var title = el("title", {}, path);
+      var d = edgePath(p, c);
+      var path = el("path", { d: d, "class": "edge link-" + l.type + (p.strip !== c.strip ? " cross-strip" : "") }, edges);
+      // A wide invisible stroke on top makes thin lines easy to hover and click.
+      var hit = el("path", { d: d, "class": "edge-hit", "data-link": l.id }, edges);
+      var title = el("title", {}, hit);
       title.textContent = p.name + " → " + c.name + " (" + l.year + "): " + l.note;
-      edgeEls.push({ link: l, el: path });
+      hit.addEventListener("pointerenter", function () {
+        path.classList.add("hover");
+        nodeEls[l.from].classList.add("hover-end");
+        nodeEls[l.to].classList.add("hover-end");
+      });
+      hit.addEventListener("pointerleave", function () {
+        path.classList.remove("hover");
+        nodeEls[l.from].classList.remove("hover-end");
+        nodeEls[l.to].classList.remove("hover-end");
+      });
+      edgeEls.push({ link: l, el: path, hit: hit });
     });
 
     g.companies.forEach(function (c) {
@@ -123,7 +223,28 @@
     world.setAttribute("transform", "translate(" + view.tx + "," + view.ty + ") scale(" + view.k + ")");
     svg.classList.toggle("far", view.k < 0.42);
     drawAxis();
+    drawLaneAxis();
     drawMinimap();
+  }
+
+  // The vertical axis: each lane's name pinned to the left edge at the top of
+  // its lane, so it stays readable while the lane is on screen.
+  function drawLaneAxis() {
+    var box = document.getElementById("lane-axis");
+    if (g.lanes.length < 2) { box.innerHTML = ""; return; }
+    var s = size(), k = view.k, left = 12;
+    var legend = document.querySelector(".legend");
+    if (legend && !legend.classList.contains("collapsed") && window.innerWidth > 760) {
+      left = legend.offsetLeft + legend.offsetWidth + 10;
+    }
+    box.innerHTML = g.lanes.map(function (lane) {
+      var top = view.ty + (lane.y0 - 30) * k, bottom = view.ty + (lane.y1 + 14) * k;
+      if (bottom < 60 || top > s.h) return "";
+      var y = Math.min(Math.max(top + 4, 40), bottom - 26);
+      var cls = Graph.SECTORS[lane.id] ? " sector-" + lane.id : "";
+      return '<div class="lane-tag' + cls + '" style="top:' + y + "px;left:" + left + 'px"><span class="swatch"></span>' +
+        lane.label.replace(/&/g, "&amp;").replace(/</g, "&lt;") + "</div>";
+    }).join("");
   }
 
   function clampView() {
@@ -173,15 +294,16 @@
     animateTo(centerOn(c.x + W / 2, c.y + H / 2, k), 650);
   }
 
-  // Show a span of years, e.g. an era, as large as fits.
-  function showRange(x0, x1) {
+  // Show a span of the map, e.g. an era, as large as fits.
+  function showRange(x0, x1, y0, y1) {
     var s = size();
     var fitK = s.w / (x1 - x0 + 120);
     var k = Math.max(0.45, Math.min(1, fitK));
     // Wide eras: start at the era's left edge, clear of the legend, at a readable zoom.
     var left = window.innerWidth > 760 ? 280 : 16;
     var tx = fitK >= 0.45 ? s.w / 2 - (x0 + x1) / 2 * k : left - x0 * k;
-    animateTo({ k: k, tx: tx, ty: s.h / 2 - g.height / 2 * k }, 650);
+    var ty = (y1 - y0) * k <= s.h ? s.h / 2 - (y0 + y1) / 2 * k : 8 - y0 * k;
+    animateTo({ k: k, tx: tx, ty: ty }, 650);
   }
 
   function fit() {
@@ -192,7 +314,8 @@
 
   function initialView() {
     var s = size();
-    view.k = Math.max(0.45, Math.min(0.85, s.h / g.height));
+    var first = g.strips[0];
+    view.k = Math.max(0.45, Math.min(0.85, s.h / (first.y1 - first.y0)));
     // Start just right of the legend so the roots column is visible.
     view.tx = window.innerWidth > 760 ? 280 : 16;
     view.ty = Math.max(0, (s.h - g.height * view.k) / 2);
@@ -200,12 +323,15 @@
     apply();
   }
 
-  // Keep a world x position on screen, e.g. the current year while playing.
-  function ensureXVisible(x) {
-    var s = size(), sx = view.tx + x * view.k;
-    if (sx > s.w - 80 || sx < 0) {
-      animateTo({ k: view.k, tx: s.w * 0.7 - x * view.k, ty: view.ty }, 500);
-    }
+  // Keep a year's column on screen (and its strip, when wrapped), e.g. while playing.
+  function ensureYearVisible(year) {
+    var s = size(), b = Graph.yearBox(g, year), k = view.k;
+    var x = b.x + W, sx = view.tx + x * k;
+    var top = view.ty + b.y0 * k, bottom = view.ty + b.y1 * k;
+    var needX = sx > s.w - 80 || sx < 0;
+    var needY = top > s.h * 0.4 || bottom < s.h * 0.3;
+    if (!needX && !needY) return;
+    animateTo({ k: k, tx: needX ? s.w * 0.7 - x * k : view.tx, ty: needY ? 8 - b.y0 * k : view.ty }, 500);
   }
 
   // ---- axis ----
@@ -213,15 +339,21 @@
   function drawAxis() {
     var s = mapEl.clientWidth;
     var out = "";
+    var midY = (size().h / 2 - view.ty) / view.k, st = g.strips[g.strips.length - 1];
+    for (var i = 0; i < g.strips.length; i++) {
+      if (midY <= g.strips[i].y1 + L.stripGap / 2) { st = g.strips[i]; break; }
+    }
+    // When wrapped, the strip's own year labels are on screen near its top; don't repeat them.
+    if (g.strips.length > 1 && view.ty + (st.y0 + 40) * view.k > 24) { axis.innerHTML = ""; return; }
     var rootX = view.tx + (L.rootsWidth / 2 - 30) * view.k;
     var lastX = -Infinity;
-    if (rootX > -40 && rootX < s && L.rootsWidth * view.k > 70) {
+    if (st.from === -Infinity && rootX > -40 && rootX < s && L.rootsWidth * view.k > 70) {
       out += '<text x="' + rootX + '" y="22" class="axis-label">Roots</text>';
       lastX = rootX;
     }
-    for (var y = L.firstYear; y <= L.lastYear - 1; y++) {
+    for (var y = st.from === -Infinity ? L.firstYear : st.from; y <= st.to; y++) {
       // Label each column at its centre, skipping labels that would collide.
-      var mid = (Graph.xForYear(y) + Graph.xForYear(y + 1) - 16) / 2;
+      var mid = (Graph.xForYear(y) + Graph.xForYear(y + 1) - 16) / 2 - st.shift;
       var x = view.tx + mid * view.k;
       if (x - lastX < 44 && y !== currentYear) continue;
       if (x < -40 || x > s + 40) continue;
@@ -340,7 +472,9 @@
         if (!moved && e.type === "pointerup" && downTarget) {
           var node = downTarget.closest && downTarget.closest(".node");
           var era = !node && downTarget.closest && downTarget.closest("[data-era]");
+          var link = !node && downTarget.closest && downTarget.closest("[data-link]");
           if (era) onEra(era.getAttribute("data-era"));
+          else if (link) onLink(g.links[+link.getAttribute("data-link")]);
           else onSelect(node ? node.getAttribute("data-id") : null);
         }
         last = null; downTarget = null;
@@ -392,6 +526,7 @@
       var l = e.link;
       var vis = f.links[l.type] && l.year <= f.year && visibleNode[l.from] && visibleNode[l.to];
       e.el.classList.toggle("hidden", !vis);
+      e.hit.classList.toggle("hidden", !vis);
     });
     drawAxis();
     drawMinimap();
@@ -425,6 +560,41 @@
     drawMinimap();
   }
 
+  // Highlight a set of companies (e.g. those that exited), with no lines emphasised.
+  function focusIds(ids) {
+    focusSet = {};
+    ids.forEach(function (id) { focusSet[id] = true; });
+    svg.classList.add("focused");
+    g.companies.forEach(function (c) {
+      nodeEls[c.id].classList.remove("selected");
+      nodeEls[c.id].classList.toggle("lineage", !!focusSet[c.id]);
+    });
+    edgeEls.forEach(function (e) { e.el.classList.remove("lineage", "path"); });
+    drawMinimap();
+  }
+
+  // Fade everything except one link and its two companies, and frame them.
+  function focusLink(l) {
+    focusSet = {};
+    focusSet[l.from] = true;
+    focusSet[l.to] = true;
+    svg.classList.add("focused");
+    g.companies.forEach(function (c) {
+      nodeEls[c.id].classList.toggle("selected", !!focusSet[c.id]);
+      nodeEls[c.id].classList.toggle("lineage", !!focusSet[c.id]);
+    });
+    edgeEls.forEach(function (e) {
+      e.el.classList.toggle("lineage", e.link === l);
+      e.el.classList.toggle("path", e.link === l);
+    });
+    drawMinimap();
+    // Frame both ends, zooming out as far as needed.
+    var p = g.byId[l.from], c = g.byId[l.to], s = size();
+    var x0 = Math.min(p.x, c.x), x1 = Math.max(p.x, c.x) + W, y0 = Math.min(p.y, c.y), y1 = Math.max(p.y, c.y) + H;
+    var k = Math.max(0.2, Math.min(1, s.w / (x1 - x0 + 200), s.h / (y1 - y0 + 200)));
+    animateTo({ k: k, tx: s.w / 2 - (x0 + x1) / 2 * k, ty: s.h / 2 - (y0 + y1) / 2 * k }, 650);
+  }
+
   function showYearBadge(year, on) {
     yearBadge.textContent = year;
     yearBadge.classList.toggle("on", on);
@@ -434,6 +604,7 @@
     g = graph;
     onSelect = opts.onSelect;
     onEra = opts.onEra || onEra;
+    onLink = opts.onLink || onLink;
     mapEl = document.getElementById("map");
     svg = document.getElementById("canvas");
     axis = document.getElementById("axis");
@@ -445,15 +616,31 @@
     initialView();
   }
 
+  // Replace the graph (e.g. a new arrangement) and redraw, keeping the view.
+  function setGraph(newG) {
+    g = newG;
+    stopAnim();
+    svg.innerHTML = "";
+    nodeEls = {};
+    edgeEls = [];
+    render();
+    clampView();
+    apply();
+  }
+
   window.MapView = {
     init: init,
+    setGraph: setGraph,
     setFilter: setFilter,
     setFocus: setFocus,
     glideTo: glideTo,
     showRange: showRange,
+    focusLink: focusLink,
+    focusIds: focusIds,
     fit: fit,
-    ensureXVisible: ensureXVisible,
+    ensureYearVisible: ensureYearVisible,
     showYearBadge: showYearBadge,
+    refresh: function () { apply(); },
     setInset: function (i) { inset = i; clampView(); apply(); },
     zoomBy: function (f) { var s = size(); zoomAt(s.w / 2, s.h / 2, f); },
     isVisible: function (id) { return !!visibleNode[id]; }

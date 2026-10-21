@@ -291,6 +291,17 @@ kbd {
 .gridline { stroke: var(--border); stroke-dasharray: 2 6; }
 .gridline-q { opacity: 0.45; stroke-dasharray: 1 9; }
 .canvas.far .gridline-q { display: none; }
+.lane-a { fill: var(--era-a); }
+.lane-b { fill: transparent; }
+.lane { stroke: var(--border); stroke-width: 1; stroke-dasharray: 1 5; }
+.lane-label {
+  fill: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  pointer-events: none;
+}
+.canvas.far .lane-label { font-size: 22px; }
 .era-label { cursor: pointer; }
 .era-label:hover { fill: var(--accent); text-decoration: underline; }
 
@@ -305,6 +316,35 @@ kbd {
 .link-alumni { stroke: var(--link-alumni); }
 .link-funding { stroke: var(--link-funding); stroke-dasharray: 7 5; }
 .link-acquisition { stroke: var(--link-acquisition); stroke-dasharray: 2 4; stroke-linecap: round; }
+
+.edge { pointer-events: none; }
+.edge.cross-strip { opacity: 0.25; }
+.edge-hit { fill: none; stroke: transparent; stroke-width: 14; pointer-events: stroke; cursor: pointer; }
+.edge.hover { opacity: 1 !important; stroke-width: 3.5; }
+.node.hover-end .node-bg { stroke: var(--accent); stroke-width: 2.5; }
+.lane-axis { position: absolute; inset: 0; pointer-events: none; z-index: 3; overflow: hidden; }
+.lane-tag {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 9px 3px 7px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  white-space: nowrap;
+}
+.lane-tag .swatch { width: 8px; height: 8px; border-radius: 3px; background: var(--sc, var(--muted)); }
+.year-label { fill: var(--muted); font-size: 13px; font-weight: 700; text-anchor: middle; }
+
+.link-card { padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface-2); margin-bottom: 8px; }
+.link-card p { margin: 0; }
+.link-card-name { font-weight: 700; font-size: 15px; margin: 2px 0 !important; }
+.link-type-desc { font-size: 13px; margin-top: 6px; }
 
 /* Companies */
 .node { cursor: pointer; transition: opacity 0.35s; }
@@ -405,6 +445,21 @@ kbd {
   color: var(--muted);
   font-weight: 700;
 }
+.segmented { display: flex; gap: 0; margin-bottom: 4px; }
+.segmented button {
+  flex: 1;
+  font: inherit;
+  font-size: 12.5px;
+  color: var(--text);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  padding: 5px 8px;
+  cursor: pointer;
+}
+.segmented button:first-child { border-radius: 8px 0 0 8px; }
+.segmented button:last-child { border-radius: 0 8px 8px 0; }
+.segmented button + button { border-left: 0; }
+.segmented button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .chip {
   display: inline-flex;
@@ -579,6 +634,12 @@ kbd {
 .era-nav { display: flex; justify-content: space-between; gap: 8px; margin-top: 24px; }
 .era-nav .btn { font-size: 12.5px; text-decoration: none; }
 .badge.link-founder { color: var(--sector-people); }
+.badge.exit-acquired { color: var(--link-acquisition); }
+.badge.exit-closed { color: #c2413b; }
+.badge.exit-renamed, .badge.exit-other { color: var(--muted); }
+.exit-year { margin: 14px 0 2px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.exits li { padding: 5px 0; }
+.small { font-size: 12.5px; }
 .link-founder { stroke: var(--sector-people); stroke-width: 2; }
 
 .poster-tag {
@@ -614,6 +675,19 @@ a.cite { color: var(--accent); }
   flex: none;
 }
 .timeline-track { flex: 1; position: relative; padding-bottom: 14px; }
+.pulse { display: block; width: calc(100% - 16px); height: 30px; margin: 0 8px -2px; overflow: visible; }
+.pulse g { cursor: pointer; }
+.pulse-hit { fill: transparent; }
+.pulse g:hover .pulse-hit { fill: var(--accent-soft); }
+.pulse-founded { fill: var(--accent); opacity: 0.55; }
+.pulse-acquired { fill: var(--link-acquisition); }
+.pulse-closed { fill: #c2413b; }
+.pulse-renamed, .pulse-other { fill: var(--muted); }
+.pulse .current .pulse-founded { opacity: 1; }
+.pulse .current .pulse-hit { fill: var(--accent-soft); }
+.pulse-base { stroke: var(--border); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.count a { color: inherit; text-decoration: underline; text-decoration-style: dotted; text-underline-offset: 3px; }
+.count a:hover { color: var(--accent); }
 .timeline input[type="range"] {
   width: 100%;
   accent-color: var(--accent);

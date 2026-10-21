@@ -11,6 +11,8 @@
  *     founders: [{ n: person, f: company id or plain-text origin, s?: independent source }],
  *     sources: ["semi1984" | url, ...] }
  *   `ended` is the year the company stopped being independent (acquired or closed).
+ *   `unconfirmed: true` marks an entry no independent source confirms, even if
+ *   its other sources (cited in the note) discuss it.
  *   sector: chips, computers, networking, software, internet, games, vc, corporate, people.
  *
  * People: an important person who acts on their own — not through a company or
@@ -63,6 +65,9 @@ window.GENEALOGY = {
   sources: {
     semi1984: { short: "SEMI 1984 poster", title: "SEMI, “Silicon Valley Genealogy” poster (1984), developed by Don C. Hoefler",
       posterFamily: true },
+    wolff1971: { short: "Wolff 1971",
+      title: "Michael F. Wolff, “The Splintering of the Solid-State Electronics Industry” (1971), reprinted in Dealing with Technological Change (Auerbach, 1971)",
+      url: "https://archive.org/details/isbn_9780877690832" },
     hoefler1971: { short: "Hoefler 1971", posterFamily: true,
       title: "Don C. Hoefler, “Silicon Valley U.S.A.”, Electronic News, January 1971 — the poster's author, so not independent of it",
       url: "https://archive.computerhistory.org/resources/access/text/2012/03/102689013-01-05-acc.pdf" }
