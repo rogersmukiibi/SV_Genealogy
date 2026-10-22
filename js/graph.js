@@ -21,6 +21,7 @@
     networking: { label: "Networking" },
     software:   { label: "Software" },
     internet:   { label: "Internet" },
+    ai:         { label: "AI" },
     games:      { label: "Games" },
     cleantech:  { label: "Cleantech & cars" },
     vc:         { label: "Venture capital" },
@@ -31,7 +32,7 @@
   // Layout constants, in map units.
   var LAYOUT = {
     firstYear: 1955,        // anything founded earlier sits in the "roots" column
-    lastYear: 2015,         // exclusive: the map runs through 2014
+    lastYear: 2027,         // exclusive: the map runs through 2026
     quarterWidth: 92,       // busy years are split into four quarter slots
     singleYearWidth: 200,   // a year with one new company needs no quarters
     quietYearWidth: 72,     // years with no new companies get a narrow column
@@ -108,7 +109,7 @@
   // Lanes split the map into horizontal bands: one per sector, one per
   // nearest root, or a single band ("lineage") that packs families tightly.
   var SECTOR_LANES = ["corporate", "chips", "computers", "networking", "vc", "people",
-    "software", "internet", "games", "cleantech"];
+    "software", "internet", "ai", "games", "cleantech"];
 
   function lanesFor(g, arrange) {
     if (arrange === "sector") {

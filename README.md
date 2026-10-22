@@ -2,7 +2,7 @@
 
 An interactive map of how Silicon Valley companies descend from one another, traced back to a handful of roots: **Shockley Semiconductor Laboratory** (1956), Stanford, UC Berkeley, HP, Xerox PARC and Ampex. It's plain HTML, CSS and JavaScript, with no framework and no build step.
 
-It covers **1956–2014**, from the transistor to the mobile and cloud era: 190 companies, 7 people and 359 links. Every company and every link carries a source.
+It covers **1956–2026**, from the transistor to the AI era: 211 companies, 9 people and 444 links. Every company and every link carries a source.
 
 ## Using it
 
@@ -38,7 +38,7 @@ GENEALOGY.add({ companies: [ … ], links: [ … ] });
   source: "https://…" }                                 // or "semi1984", or an array of both
 ```
 
-- **Sectors:** `chips`, `computers`, `networking`, `software`, `internet`, `games`, `cleantech`, `vc`, `corporate`, `people`
+- **Sectors:** `chips`, `computers`, `networking`, `software`, `internet`, `ai`, `games`, `cleantech`, `vc`, `corporate`, `people`
 - **Link types:** `spinout` (founders left the parent to start it), `alumni` (a founder or key leader came from the parent), `funding` (the parent financed it), `acquisition` (formed from the parent's bought assets), `founder` (a person founded it)
 - **`month`** is optional and must be sourced; it places the company in its quarter.
 - **Roots** are listed in `data/core.js`; traces stop at the nearest one.

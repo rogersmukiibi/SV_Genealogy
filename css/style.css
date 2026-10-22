@@ -17,6 +17,7 @@
   --sector-networking: #2e8f3e;
   --sector-software: #f2c200;
   --sector-internet: #d0387f;
+  --sector-ai: #0891b2;
   --sector-games: #de5a26;
   --sector-cleantech: #6aa412;
   --sector-vc: #8a4ed6;
@@ -52,6 +53,7 @@
     --sector-networking: #5cc26b;
     --sector-software: #ffd43b;
     --sector-internet: #f06aa8;
+    --sector-ai: #38bdf8;
     --sector-games: #ff8656;
     --sector-cleantech: #a3d65c;
     --sector-vc: #b386ff;
@@ -83,6 +85,7 @@
   --sector-networking: #5cc26b;
   --sector-software: #ffd43b;
   --sector-internet: #f06aa8;
+  --sector-ai: #38bdf8;
   --sector-games: #ff8656;
   --sector-cleantech: #a3d65c;
   --sector-vc: #b386ff;
@@ -376,6 +379,7 @@ kbd {
 .sector-networking { --sc: var(--sector-networking); }
 .sector-software { --sc: var(--sector-software); }
 .sector-internet { --sc: var(--sector-internet); }
+.sector-ai { --sc: var(--sector-ai); }
 .sector-games { --sc: var(--sector-games); }
 .sector-cleantech { --sc: var(--sector-cleantech); }
 .sector-vc { --sc: var(--sector-vc); }

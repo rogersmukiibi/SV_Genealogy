@@ -13,7 +13,7 @@
  *   `ended` is the year the company stopped being independent (acquired or closed).
  *   `unconfirmed: true` marks an entry no independent source confirms, even if
  *   its other sources (cited in the note) discuss it.
- *   sector: chips, computers, networking, software, internet, games, vc, corporate, people.
+ *   sector: chips, computers, networking, software, internet, ai, games, cleantech, vc, corporate, people.
  *
  * People: an important person who acts on their own — not through a company or
  *   fund, e.g. a personal angel investment — gets a node with sector "people".
@@ -53,7 +53,9 @@ window.GENEALOGY = {
     { id: "web2-social", label: "Web 2.0 & social", from: 2002, to: 2007,
       summary: "PayPal's alumni scatter into new companies, Facebook moves to Palo Alto, and Y Combinator funds its first batches." },
     { id: "mobile-cloud", label: "Mobile & cloud", from: 2008, to: 2014,
-      summary: "The App Store and the cloud: the sharing economy, developer platforms and a new generation of venture firms." }
+      summary: "The App Store and the cloud: the sharing economy, developer platforms and a new generation of venture firms." },
+    { id: "ai", label: "The AI era", from: 2015, to: 2026,
+      summary: "From OpenAI's founding to today's model labs, AI chips and AI-native applications." }
   ],
 
   roots: [
