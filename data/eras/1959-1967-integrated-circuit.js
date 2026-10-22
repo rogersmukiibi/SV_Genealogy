@@ -141,6 +141,14 @@ GENEALOGY.add({
         { n: "Franz C. McVay", f: "Applied Technology" },
         { n: "Leonard D. Seader", f: "Applied Technology" }],
       sources: ["semi1984", "https://www.sdstate.edu/jerome-j-lohr-engineering/distinguished-engineer-honorees/lawrence-r-thielen", "https://techmonitor.ai/?p=164565", "https://www.hpmemoryproject.org/timeline/mwtechcenter/mwtechcenter.htm", "https://trademarks.justia.com/owners/avantek-inc-101625", "https://discovery.patsnap.com/company/avantek/", "https://archive.org/details/bitsavers_ElectronicignV14N1119660510_77757596", "https://archive.org/details/bitsavers_ElectronicignV15N0319670201_127232029", "https://archive.org/details/contactsinfluent0000vari_b0i3", "https://archive.org/details/sim_official-gazette-of-the-united-states-patent-and-trademark-office_1978-11-21_976_3", "wolff1971"] },
+    { id: "greylock", name: "Greylock Partners", founded: 1965, sector: "vc",
+      fate: "Active venture capital firm; HQ moved from Massachusetts to Menlo Park in 2009",
+      note: "One of the oldest VC firms, founded in Cambridge, Massachusetts in 1965; it opened its first Silicon Valley office in 1999 and moved its headquarters from Waltham to Menlo Park in 2009. It led LinkedIn's 2004 Series B, joined Facebook's 2006 Series B, and LinkedIn founder Reid Hoffman became a partner in November 2009.",
+      founders: [
+        { n: "Bill Elfers", f: "American Research and Development Corporation" },
+        { n: "Dan Gregory", f: "" },
+        { n: "Charlie Waite", f: "American Research and Development Corporation (joined shortly after)" }],
+      sources: ["https://en.wikipedia.org/wiki/Greylock_Partners", "https://www.informationweek.com/it-sectors/greylock-headquarters-moving-to-california", "https://venturebeat.com/business/greylock-partners-recruits-reid-hoffman-raises-575m-fund"] },
     { id: "philco-ford-micro", name: "Philco-Ford Microelectronics", founded: 1966, ended: 1968, sector: "chips",
       fate: "Moved to Lansdale, Pennsylvania, where it continued as Ford Microelectronics into the late 1980s; the Silicon Valley operation closed in 1968",
       note: "Formed from General Micro-electronics. Its staff seeded several companies.",
@@ -220,6 +228,8 @@ GENEALOGY.add({
     { from: "philco-ford-micro", to: "electronic-arrays", year: 1967, type: "spinout", note: "Philco-Ford engineers found Electronic Arrays",
       source: ["semi1984","https://en.wikipedia.org/wiki/American_Microsystems"] },
     { from: "fairchild", to: "national", year: 1967, type: "alumni", note: "Charles Sporck and other Fairchild managers take over National and move it to Santa Clara",
-      source: ["semi1984","https://www.computerhistory.org/siliconengine/companies/","https://www.fundinguniverse.com/company-histories/national-semiconductor-corporation-history"] }
+      source: ["semi1984","https://www.computerhistory.org/siliconengine/companies/","https://www.fundinguniverse.com/company-histories/national-semiconductor-corporation-history"] },
+    { from: "linkedin", to: "greylock", year: 2009, type: "alumni", note: "LinkedIn founder Reid Hoffman joins Greylock as a partner while staying LinkedIn's executive chairman.",
+      source: "https://venturebeat.com/business/greylock-partners-recruits-reid-hoffman-raises-575m-fund" }
   ]
 });

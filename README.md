@@ -1,8 +1,8 @@
 # Silicon Valley Genealogy
 
-An interactive map of how Silicon Valley companies descend from one another, traced back to a handful of roots: **Shockley Semiconductor Laboratory** (1956), Stanford, HP, Xerox PARC and Ampex. It's plain HTML, CSS and JavaScript, with no framework and no build step.
+An interactive map of how Silicon Valley companies descend from one another, traced back to a handful of roots: **Shockley Semiconductor Laboratory** (1956), Stanford, UC Berkeley, HP, Xerox PARC and Ampex. It's plain HTML, CSS and JavaScript, with no framework and no build step.
 
-It covers **1956–2007**, from the transistor to Web 2.0: 155 companies, 5 people and 235 links. Every company and every link carries a source.
+It covers **1956–2014**, from the transistor to the mobile and cloud era: 190 companies, 7 people and 359 links. Every company and every link carries a source.
 
 ## Using it
 
@@ -12,7 +12,7 @@ It covers **1956–2007**, from the transistor to Web 2.0: 155 companies, 5 peop
 - **Search** (press `/`) finds companies and people, e.g. "Hoerni" or "Noyce".
 - **Timeline:** drag the slider or press ▶ to watch the Valley grow year by year. Companies that were acquired or closed by the chosen year get a dashed outline. Busy years are split into quarters: companies with a sourced founding month sit in that quarter; the rest are placed wherever there is room.
 - **People** appear as rounded pills, only when they acted on their own, for example a personal angel investment.
-- **Arrange by** (in the legend): left to right is time; top to bottom is either **Sector** (a lane per sector) or **Root** (a lane per family: Shockley, Stanford, HP, Xerox PARC, Ampex). Lane names stay pinned to the left edge. Within a lane, each year's companies are spread evenly over the lane's height, as on the 1984 poster. Lines run through the gaps between rows, so a box never sits on a line it isn't part of.
+- **Arrange by** (in the legend): left to right is time; top to bottom is either **Sector** (a lane per sector) or **Root** (a lane per family: Shockley, Stanford, UC Berkeley, HP, Xerox PARC, Ampex). Lane names stay pinned to the left edge. Within a lane, each year's companies are spread evenly over the lane's height, as on the 1984 poster. Lines run through the gaps between rows, so a box never sits on a line it isn't part of.
 - **Lines:** hover a line to highlight its two companies; click it to see that link, its source and both ends.
 - **Exits:** the chart above the slider shows companies founded (above the line) and acquired or closed (below) each year. Click the "acquired or closed" count for the full list up to the chosen year.
 - **Legend & filters:** click a sector or link type to hide or show it.

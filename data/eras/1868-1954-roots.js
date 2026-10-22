@@ -5,6 +5,12 @@
  */
 GENEALOGY.add({
   companies: [
+    { id: "uc-berkeley", name: "University of California, Berkeley", founded: 1868, month: 3, sector: "corporate",
+      fate: "Active (public research university)",
+      note: "Founded March 23, 1868 as California's first land-grant university. Its alumni and labs fed the Valley: Gordon Moore (BS 1950), Steve Wozniak, Bill Joy's BSD Unix work before Sun, Diane Greene and Mendel Rosenblum of VMware, and AMPLab's Spark, which became Databricks.",
+      founders: [
+        { n: "State of California (Morrill Act land-grant; absorbed College of California)", f: "" }],
+      sources: ["https://en.wikipedia.org/wiki/University_of_California,_Berkeley", "https://en.wikipedia.org/wiki/Bill_Joy", "https://en.wikipedia.org/wiki/Diane_Greene", "https://en.wikipedia.org/wiki/Mendel_Rosenblum", "https://en.wikipedia.org/wiki/Databricks", "https://en.wikipedia.org/wiki/Gordon_Moore", "https://en.wikipedia.org/wiki/Steve_Wozniak"] },
     { id: "stanford", name: "Stanford University", founded: 1885, month: 11, sector: "corporate",
       fate: "Active (private research university)",
       note: "Founded in 1885 by Leland and Jane Stanford; opened to students in 1891. Engineering professor Frederick Terman mentored Bill Hewlett and David Packard and later created Stanford Industrial Park.",

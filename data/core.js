@@ -51,7 +51,9 @@ window.GENEALOGY = {
     { id: "dot-com", label: "The internet & the dot-com boom", from: 1990, to: 2001,
       summary: "From Netscape to Google, through the 2000–2001 bust." },
     { id: "web2-social", label: "Web 2.0 & social", from: 2002, to: 2007,
-      summary: "PayPal's alumni scatter into new companies, Facebook moves to Palo Alto, and Y Combinator funds its first batches." }
+      summary: "PayPal's alumni scatter into new companies, Facebook moves to Palo Alto, and Y Combinator funds its first batches." },
+    { id: "mobile-cloud", label: "Mobile & cloud", from: 2008, to: 2014,
+      summary: "The App Store and the cloud: the sharing economy, developer platforms and a new generation of venture firms." }
   ],
 
   roots: [
@@ -59,7 +61,8 @@ window.GENEALOGY = {
     { id: "stanford", label: "Stanford University", why: "Its students and labs started HP, Sun, Cisco, Yahoo, Google and more." },
     { id: "hp", label: "Hewlett-Packard", why: "The Palo Alto garage company whose engineers and executives seeded many firms." },
     { id: "parc", label: "Xerox PARC", why: "The research lab behind Ethernet, laser printing and the graphical interface." },
-    { id: "ampex", label: "Ampex", why: "The tape pioneer where the founders of Atari and Oracle worked." }
+    { id: "ampex", label: "Ampex", why: "The tape pioneer where the founders of Atari and Oracle worked." },
+    { id: "uc-berkeley", label: "UC Berkeley", why: "The East Bay university whose alumni and labs fed Intel, Apple, Sun, VMware and Databricks." }
   ],
 
   sources: {

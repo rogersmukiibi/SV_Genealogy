@@ -426,6 +426,8 @@ GENEALOGY.add({
       source: "semi1984" },
     { from: "hp-associates", to: "qualidyne", year: 1968, type: "alumni", note: "David Hilbiber comes by way of HP Associates",
       source: "wolff1971" },
+    { from: "uc-berkeley", to: "intel", year: 1968, type: "alumni", note: "Intel co-founder Gordon Moore earned his chemistry degree at Berkeley in 1950.",
+      source: "https://en.wikipedia.org/wiki/Gordon_Moore" },
     { from: "fairchild", to: "amd", year: 1969, type: "spinout", note: "Jerry Sanders and seven others leave Fairchild",
       source: ["semi1984","https://en.wikipedia.org/wiki/Jerry_Sanders_(businessman)"] },
     { from: "fairchild", to: "four-phase", year: 1969, type: "spinout", note: "Lee Boysel's MOS group leaves Fairchild",

@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Silicon Valley Genealogy</title>
-  <meta name="description" content="An interactive map of how Silicon Valley companies descend from Shockley Semiconductor Laboratory, 1956–2007.">
+  <meta name="description" content="An interactive map of how Silicon Valley companies descend from Shockley Semiconductor Laboratory, 1956–2014.">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -64,10 +64,10 @@
     <div class="timeline-track">
       <svg id="pulse" class="pulse" viewBox="0 0 1000 36" preserveAspectRatio="none" role="img"
            aria-label="Companies founded each year (above the line) and companies acquired or closed (below)"></svg>
-      <input id="year" type="range" min="1955" max="2007" step="1" value="2007" aria-label="Show the Valley as of year">
+      <input id="year" type="range" min="1955" max="2014" step="1" value="2014" aria-label="Show the Valley as of year">
       <div id="ticks" class="ticks" aria-hidden="true"></div>
     </div>
-    <output id="year-out" class="year-out" for="year">2007</output>
+    <output id="year-out" class="year-out" for="year">2014</output>
     <span id="count" class="count"></span>
   </footer>
 
@@ -75,7 +75,7 @@
     <form method="dialog">
       <h2>About this map</h2>
       <p>Every box is a company; rounded pills are people who acted on their own. Lines show how each descends from earlier ones: founders who left to start it, alumni who joined, money that backed it, or assets it was built from. Traces end at a handful of <strong>roots</strong>, above all <strong>Shockley Semiconductor Laboratory</strong> (1956) and the eight engineers who left it to found Fairchild.</p>
-      <p>The map runs from the transistor to Web 2.0, 1956–2007. Use the slider or ▶ to watch the Valley grow year by year. Click any company to see its path back to Shockley.</p>
+      <p>The map runs from the transistor to the mobile and cloud era, 1956–2014. Use the slider or ▶ to watch the Valley grow year by year. Click any company to see its path back to Shockley.</p>
       <h3>Eras</h3>
       <p>Click an era's name on the map, or pick one here, to see what the data says about it.</p>
       <ul id="about-eras"></ul>
@@ -96,13 +96,14 @@
   </dialog>
 
   <script src="data/core.js"></script>
-  <script src="data/eras/1885-1954-roots.js"></script>
+  <script src="data/eras/1868-1954-roots.js"></script>
   <script src="data/eras/1955-1958-transistor.js"></script>
   <script src="data/eras/1959-1967-integrated-circuit.js"></script>
   <script src="data/eras/1968-1975-microprocessor.js"></script>
   <script src="data/eras/1976-1989-personal-computer.js"></script>
   <script src="data/eras/1990-2001-dot-com.js"></script>
   <script src="data/eras/2002-2007-web2-social.js"></script>
+  <script src="data/eras/2008-2014-mobile-cloud.js"></script>
   <script src="js/graph.js"></script>
   <script src="js/map.js"></script>
   <script src="js/insights.js"></script>

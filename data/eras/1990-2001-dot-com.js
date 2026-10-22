@@ -137,7 +137,16 @@ GENEALOGY.add({
         { n: "Parker Harris", f: "Left Coast Software (co-founder)" },
         { n: "Dave Moellenhoff", f: "" },
         { n: "Frank Dominguez", f: "" }],
-      sources: ["https://en.wikipedia.org/wiki/Salesforce", "https://en.wikipedia.org/wiki/Marc_Benioff", "https://moderncto.io/107-parker-harris-cto-co-founder-at-salesforce/"] }
+      sources: ["https://en.wikipedia.org/wiki/Salesforce", "https://en.wikipedia.org/wiki/Marc_Benioff", "https://moderncto.io/107-parker-harris-cto-co-founder-at-salesforce/"] },
+    { id: "lightspeed", name: "Lightspeed Venture Partners", founded: 2000, sector: "vc",
+      fate: "Active venture capital firm",
+      note: "Founded in 2000 by four former Weiss, Peck & Greer investors who had studied at Stanford together. It led Nutanix's 2010 Series A, joined Nest's 2011 Series B, and was Snapchat's first venture investor in 2012.",
+      founders: [
+        { n: "Barry Eggers", f: "Weiss, Peck & Greer; Stanford" },
+        { n: "Christopher Schaepe", f: "Weiss, Peck & Greer; Stanford" },
+        { n: "Ravi Mhatre", f: "Weiss, Peck & Greer; Stanford" },
+        { n: "Peter Nieh", f: "Weiss, Peck & Greer; Stanford" }],
+      sources: ["https://en.wikipedia.org/wiki/Lightspeed_Venture_Partners", "https://lsvp.com/company/nutanix/", "https://lsvp.com/company/nest/"] }
   ],
 
   links: [
@@ -193,6 +202,8 @@ GENEALOGY.add({
       source: "https://en.wikipedia.org/wiki/Luke_Nosek" },
     { from: "stanford", to: "vmware", year: 1998, type: "alumni", note: "VMware was co-founded by Stanford professor Mendel Rosenblum and his grad students, building on Stanford's Disco research.",
       source: "https://en.wikipedia.org/wiki/VMware" },
+    { from: "uc-berkeley", to: "vmware", year: 1998, type: "alumni", note: "VMware co-founders Diane Greene and Mendel Rosenblum met as Berkeley computer-science students.",
+      source: "https://en.wikipedia.org/wiki/Diane_Greene" },
     { from: "sequoia", to: "google", year: 1999, type: "funding", note: "Sequoia Capital co-led Google's $25 million round in June 1999.",
       source: "https://en.wikipedia.org/wiki/Google" },
     { from: "kleiner-perkins", to: "google", year: 1999, type: "funding", note: "Kleiner Perkins co-led Google's $25 million round in June 1999, paying $12 million for its stake.",

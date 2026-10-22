@@ -31,7 +31,7 @@
   // Layout constants, in map units.
   var LAYOUT = {
     firstYear: 1955,        // anything founded earlier sits in the "roots" column
-    lastYear: 2008,         // exclusive: the map runs through 2007
+    lastYear: 2015,         // exclusive: the map runs through 2014
     quarterWidth: 92,       // busy years are split into four quarter slots
     singleYearWidth: 200,   // a year with one new company needs no quarters
     quietYearWidth: 72,     // years with no new companies get a narrow column
